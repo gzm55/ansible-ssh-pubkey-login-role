@@ -1,0 +1,6 @@
+---
+- hosts: localhost
+  gather_facts: False
+  roles:
+  - ansible-ssh-pubkey-login-role
+  - ansible-ssh-pubkey-login-role
