@@ -13,8 +13,14 @@ addons:
   apt:
     packages:
     - python-pip
+    - sshpass
 
 install:
+  - which sshpass
+  - which ssh-keygen
+  - which ssh-agent
+  - which ssh-add
+
   # Install ansible
   - pip install ansible
 
@@ -58,8 +64,7 @@ script:
   - ssh-keygen -p -P '' -N '123456' -f ~/.ssh/id_dsa
   - ! ansible-playbook tests/test.yml -i tests/inventory
   - ! ansible-playbook tests/test.yml -i tests/inventory-pass
-  - sshpass -p 123456 -P 'Enter passphrase for' ssh-add
-  - ansible-playbook tests/test.yml -i tests/inventory
+  - eval `ssh-agent` && sshpass -p 123456 -P 'Enter passphrase for' ssh-add && ansible-playbook tests/test.yml -i tests/inventory
 
 notifications:
   webhooks: https://galaxy.ansible.com/api/v1/notifications/
