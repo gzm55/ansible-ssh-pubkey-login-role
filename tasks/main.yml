@@ -3,14 +3,6 @@
 #   - Try ssh login only by pubkey
 #   - If login fail, copy all known keys to the hosts by raw module
 
-- name: sshpass should detect custom prompt (-P)
-  connection: local
-  run_once: True
-  register: sshpass_prompt_opt
-  raw: sshpass -Px
-  failed_when: sshpass_prompt_opt.stderr != ''
-  changed_when: False
-
 - name: get ssh options
   register: ssh_options
   connection: ssh
@@ -20,14 +12,11 @@
   failed_when: ssh_options.stderr != ''
   changed_when: False
 
-# TODO detect privite key password by expect module or expect command
 - name: ssh private keys should be alread in agent or without passwords
   connection: local
   register: check_login_pubkey
-  raw: >
-       sshpass
-       -v -p ''
-       -P 'Enter passphrase for key'
+  expect:
+    command: >
        {{ ansible_ssh_executable
           | d(local_ansible_config['ssh_connection/ssh_executable'])
           | d('ssh', True)
@@ -38,7 +27,9 @@
        -o PasswordAuthentication=no
        -o ControlPath=none
        {{ ssh_options.stdout_lines | map('quote') | join(' ') }}
-  failed_when: check_login_pubkey.stderr | d() | search('SSHPASS detected prompt. Sending password.')
+    responses:
+      '(?i)Enter passphrase for key': ''
+  failed_when: check_login_pubkey.stdout | d() | search('Enter passphrase for key')
   changed_when: False
 
 - block:

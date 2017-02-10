@@ -33,7 +33,6 @@ dependencies:
 
 - role: gzm55.require_local_command
   command:
-  - sshpass
   - cat
   - >
     {{ ansible_play_batch
