@@ -14,6 +14,9 @@
 
 - name: ssh private keys should be alread in agent or without passwords
   connection: local
+  vars:
+    # use local python searching from PATH
+    ansible_python_interpreter: python
   register: check_login_pubkey
   expect:
     command: >
@@ -29,7 +32,7 @@
        {{ ssh_options.stdout_lines | map('quote') | join(' ') }}
     responses:
       '(?i)Enter passphrase for key': ''
-  failed_when: check_login_pubkey.stdout | d() | search('Enter passphrase for key')
+  failed_when: check_login_pubkey.stdout is not defined or check_login_pubkey.stdout | search('Enter passphrase for key')
   changed_when: False
 
 - debug: msg="{{check_login_pubkey}}"
