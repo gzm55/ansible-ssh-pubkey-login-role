@@ -69,7 +69,7 @@
            | map('regex_replace', '$', '.pub') }}
     with_items: >
       {{  ( lookup('lines',
-                   (need_install and require_local_command['PATH='+lookup('env','PATH')|quote][ssh-add])
+                   (need_install and require_local_command['PATH='+lookup('env','PATH')|quote]['ssh-add'])
                    | ternary('ssh-add -L || true', ''),
                    wanglist=True)
             | reject('match', 'The agent has no identities.')
@@ -81,7 +81,7 @@
                    | join(';'),
                    wantlist=True)
           + lookup('lines',
-                   (need_install and require_local_command['PATH='+lookup('env','PATH')|quote][ssh-keygen])
+                   (need_install and require_local_command['PATH='+lookup('env','PATH')|quote]['ssh-keygen'])
                    | ternary(identity_pubkeys
                              | reject('exists')
                              | map('regex_replace', '\.pub$', '')
