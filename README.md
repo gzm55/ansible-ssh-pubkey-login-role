@@ -8,7 +8,7 @@ Requirements
 
 Python Modules:
 * ansible>=2.2
-* jinja2>=2.8
+* jinja2>=2.7
 
 Role Variables
 --------------

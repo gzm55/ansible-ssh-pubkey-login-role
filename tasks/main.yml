@@ -4,6 +4,7 @@
 #   - If login fail, copy all known keys to the hosts by raw module
 
 # TODO detect privite key password by expect module or expect command
+# TODO less shell
 - name: sshpass should detect custom prompt (-P)
   connection: local
   run_once: True
@@ -111,7 +112,12 @@
 
   - name: at least one key installed
     assert:
-      that: "public_key_installed.results | selectattr('changed', 'equalto', True) | list | length > 0"
+      that: "public_key_installed.results
+             | selectattr('changed', 'defined')
+             | map(attribute='changed')
+             | intersect([True])
+             | list
+             | length > 0"
       msg: "no key installed!"
 
   when: check_login_pubkey.rc != 0
