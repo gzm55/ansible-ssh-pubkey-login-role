@@ -28,6 +28,10 @@ dependencies:
   config_key: ssh_connection/ssh_executable
 
 - role: gzm55.require_local_command
+  only_check: True
+  command: [ ssh-add, ssh-keygen ]
+
+- role: gzm55.require_local_command
   command:
   - sshpass
   - cat

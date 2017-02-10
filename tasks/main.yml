@@ -3,8 +3,6 @@
 #   - Try ssh login only by pubkey
 #   - If login fail, copy all known keys to the hosts by raw module
 
-# TODO detect privite key password by expect module or expect command
-# TODO less shell
 - name: sshpass should detect custom prompt (-P)
   connection: local
   run_once: True
@@ -22,6 +20,7 @@
   failed_when: ssh_options.stderr != ''
   changed_when: False
 
+# TODO detect privite key password by expect module or expect command
 - name: ssh private keys should be alread in agent or without passwords
   connection: local
   register: check_login_pubkey
@@ -64,60 +63,51 @@
 
   - name: install public keys
     register: public_key_installed
-    with_lines: >
-      {{ (debug_identity_files.stdout_lines is defined) | ternary('true', 'false') }} &&
-      { { command -v ssh-add || which ssh-add; } >/dev/null && ssh-add -L
+    vars:
+      need_install: "{{ debug_identity_files.stdout_lines is defined }}"
+      identity_pubkeys: >
         {{ debug_identity_files.stdout_lines
            | d([])
            | select('match', '^debug1: identity file .*$')
            | map('regex_replace', '^debug1: identity file |(-cert)? type [^ ]+$', '')
            | unique
            | select('exists')
-           | map('regex_replace', '$', '.pub')
-           | select('exists')
-           | map('quote')
-           | map('regex_replace', '^', 'cat ')
-           | join(';') }}
-        { command -v ssh-keygen && which ssh-keygen; } >/dev/null &&
-        { {{ debug_identity_files.stdout_lines
-             | d([])
-             | select('match', '^debug1: identity file .*$')
-             | map('regex_replace', '^debug1: identity file |(-cert)? type [^ ]+$', '')
-             | unique
-             | select('exists')
-             | map('regex_replace', '$', '.pub')
-             | reject('exists')
-             | map('regex_replace', '\.pub$', '')
-             | map('quote')
-             | map('regex_replace', '^', 'ssh-keygen -y -f ')
-             | join(';') }}
-        :; }
-      } | { if { command -v uniq; which uniq; }>/dev/null; then uniq; else cat; fi; };
-      exit 0
-    when: item != ''
+           | map('regex_replace', '$', '.pub') }}
+    with_items: >
+      {{  ( lookup('lines',
+                   (need_install and require_local_command['PATH='+lookup('env','PATH')|quote][ssh-add])
+                   | ternary('ssh-add -L || true', ''),
+                   wanglist=True)
+            | reject('match', 'The agent has no identities.')
+          + lookup('lines',
+                   identity_pubkeys
+                   | select('exists')
+                   | map('quote')
+                   | map('regex_replace', '^', 'cat ')
+                   | join(';'),
+                   wantlist=True)
+          + lookup('lines',
+                   (need_install and require_local_command['PATH='+lookup('env','PATH')|quote][ssh-keygen])
+                   | ternary(identity_pubkeys
+                             | reject('exists')
+                             | map('regex_replace', '\.pub$', '')
+                             | map('quote')
+                             | map('regex_replace', '^', 'ssh-keygen -y -f ')
+                             | join(';'),
+                             ''),
+                   wantlist=True)
+          )
+          | unique
+          | difference('')
+      }}
     raw: >
       cd;
       umask 077;
       mkdir -p .ssh;
-      { command -v grep || which grep; } \
-      && grep -F {{ item | quote }} .ssh/authorized_keys \
-      && echo 'Already Installled' \
-      && exit 0;
       echo {{ item | quote }} >> .ssh/authorized_keys
       || exit 1;
-      { command -v restorecon || which restorecon; } \
+      { command -v restorecon || which restorecon; } >/dev/null \
       && restorecon -F .ssh .ssh/authorized_keys;
       exit 0
-    changed_when: not (public_key_installed.stdout | search("Already Installled"))
-
-  - name: at least one key installed
-    assert:
-      that: "public_key_installed.results
-             | selectattr('changed', 'defined')
-             | map(attribute='changed')
-             | intersect([True])
-             | list
-             | length > 0"
-      msg: "no key installed!"
 
   when: check_login_pubkey.rc != 0

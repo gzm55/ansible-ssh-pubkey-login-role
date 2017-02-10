@@ -2,13 +2,18 @@ ssh_pubkey_login
 =========
 
 Role for copying local ssh private key to managed hosts.
+Only need ansible raw module to install new keys, so could work for seeding a managed machine.
 
 Requirements
 ------------
 
-Python Modules:
+On the managing machine, Python Modules:
 * ansible>=2.2
 * jinja2>=2.7
+
+On the Remote machine:
+* shell, e.g. /bin/sh
+* `echo` command
 
 Role Variables
 --------------
