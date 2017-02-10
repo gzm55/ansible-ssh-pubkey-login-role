@@ -92,7 +92,7 @@
                    wantlist=True)
           )
           | unique
-          | difference('')
+          | difference([''])
       }}
     raw: >
       cd;
