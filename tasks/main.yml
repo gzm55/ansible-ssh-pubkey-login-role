@@ -73,6 +73,7 @@
                    | ternary('ssh-add -L || true', ''),
                    wanglist=True)
             | reject('match', 'The agent has no identities.')
+            | list
           + lookup('lines',
                    identity_pubkeys
                    | select('exists')
