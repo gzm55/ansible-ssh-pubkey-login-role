@@ -65,10 +65,12 @@ script:
   - docker exec -i alpine-sshd sh 'rm ~/.ssh -rf'
 
   - echo ========== [run 3rd round, with crypted keys] ==========
+  - A=x
+  - echo A=[$A]
   - ssh-keygen -p -P '' -N '123456' -f ~/.ssh/id_dsa
   - ! ansible-playbook tests/test.yml -i tests/inventory
   - ! ansible-playbook tests/test.yml -i tests/inventory-pass
-  - eval `ssh-agent` && DISPLAY=:0 SSH_ASKPASS="$PWD/ps.sh" ssh-add && ansible-playbook tests/test.yml -i tests/inventory
+  - eval `ssh-agent` && echo | DISPLAY=:0 SSH_ASKPASS="$PWD/ps.sh" ssh-add && ansible-playbook tests/test.yml -i tests/inventory
 
 notifications:
   webhooks: https://galaxy.ansible.com/api/v1/notifications/

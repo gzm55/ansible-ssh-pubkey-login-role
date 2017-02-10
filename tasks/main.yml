@@ -44,13 +44,13 @@
          {{ ansible_ssh_executable
             | d(local_ansible_config['ssh_connection/ssh_executable'])
             | d('ssh', True)
-            | quote }}
-         -v
-         -o IdentitiesOnly=yes
-         -o KbdInteractiveAuthentication=no
-         -o PreferredAuthentications=publickey
-         -o PasswordAuthentication=no
-         -o ControlPath=none
+            | quote }} \
+         -v \
+         -o IdentitiesOnly=yes \
+         -o KbdInteractiveAuthentication=no \
+         -o PreferredAuthentications=publickey \
+         -o PasswordAuthentication=no \
+         -o ControlPath=none \
          {{ ssh_options.stdout_lines | reject('match', '^-v+$') | map('quote') | join(' ') }} 2>&1
     failed_when: False
     changed_when: False
