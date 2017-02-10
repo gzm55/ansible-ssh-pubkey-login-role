@@ -51,7 +51,7 @@ script:
   - ansible-playbook tests/test.yml -i tests/inventory --syntax-check
 
   - echo ========== [run 1st round, no key] ==========
-  - ! ansible-playbook tests/test.yml -i tests/inventory
+  - ! ansible-playbook tests/test.yml -vvvvv -i tests/inventory
   - ! ansible-playbook tests/test.yml -i tests/inventory-pass
 
   - echo ========== [run 2nd round, with uncrypted keys] ==========
