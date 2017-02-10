@@ -13,6 +13,7 @@ addons:
   apt:
     packages:
     - python-pip
+    - sshpass
 
 install:
   - which ssh-keygen

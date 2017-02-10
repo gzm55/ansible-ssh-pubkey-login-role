@@ -32,6 +32,8 @@
   failed_when: check_login_pubkey.stdout | d() | search('Enter passphrase for key')
   changed_when: False
 
+- debug: msg="{{check_login_pubkey}}"
+
 - block:
 
   - name: list identity files
