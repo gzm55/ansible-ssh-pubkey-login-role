@@ -46,6 +46,8 @@ install:
   - chmod +x ps.sh
 
 script:
+  - set -e
+
   # Basic role syntax check
   - echo ========== [syntax check] ==========
   - ansible-playbook tests/test.yml -i tests/inventory --syntax-check

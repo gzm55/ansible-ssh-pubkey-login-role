@@ -13,10 +13,14 @@
   changed_when: False
 
 - name: ssh private keys should be alread in agent or without passwords
-  connection: local
+
+  # force using current python interpreter
+  delegate_to: localhost
   vars:
-    # use local python searching from PATH
-    ansible_python_interpreter: python
+    ansible_python_interpreter: exe
+  environment:
+    PATH: "{{ lookup('pipe', 'echo /proc/$PPID:$PATH') }}"
+
   register: check_login_pubkey
   expect:
     command: >
@@ -105,5 +109,15 @@
       { command -v restorecon || which restorecon; } >/dev/null \
       && restorecon -F .ssh .ssh/authorized_keys;
       exit 0
+
+  - name: at least one key installed
+    assert:
+      that: "public_key_installed.results
+             | selectattr('changed', 'defined')
+             | map(attribute='changed')
+             | intersect([True])
+             | list
+             | length > 0"
+      msg: "no key installed!"
 
   when: check_login_pubkey.rc != 0
