@@ -53,8 +53,8 @@ script:
   - ansible-playbook tests/test.yml -i tests/inventory --syntax-check
 
   - echo ========== [run 1st round, no key] ==========
-  - ! ansible-playbook tests/test.yml -i tests/inventory
-  - ! ansible-playbook tests/test.yml -i tests/inventory-pass
+  - \! ansible-playbook tests/test.yml -i tests/inventory
+  - ansible-playbook tests/test.yml -i tests/inventory-pass && false
 
   - echo ========== [run 2nd round, with uncrypted keys] ==========
   - ssh-keygen -N '' -f ~/.ssh/id_rsa
