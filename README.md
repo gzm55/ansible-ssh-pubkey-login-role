@@ -1,9 +1,13 @@
 ssh_pubkey_login
 =========
 
-Role for copying local ssh private key to managed hosts.
-Only need ansible raw module to remotely install new keys,
+Role for copying local ssh public keys to managed hosts.
+Only need ansible raw module on remote hosts to install new keys,
 so could work for seeding a managed machine.
+
+Basic method is the same as ssh-copyid:
+- Try ssh login only by pubkey
+- If login fail, copy all known public keys to the hosts via raw module
 
 Requirements
 ------------

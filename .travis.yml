@@ -56,7 +56,7 @@ script:
   - true && ! ansible-playbook tests/test.yml -i tests/inventory
   - true && ! ansible-playbook tests/test.yml -i tests/inventory-pass
 
-  - echo ========== [run 2nd round, with a uncrypted key pairs] ==========
+  - echo ========== [run 2nd round, with a uncrypted key pair] ==========
   - ssh -O exit -o Port=4848 -o User=root -o ControlPath=/home/travis/.ansible/cp/ansible-ssh-%h-%p-%r -tt 127.0.0.1 || true
   - ssh-keygen -N '' -f ~/.ssh/id_rsa
   - true && ! ansible-playbook tests/test.yml -i tests/inventory

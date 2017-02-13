@@ -1,6 +1,6 @@
 galaxy_info:
   author: James Z.M. Gao
-  description: Role for copying local ssh private key to managed hosts.
+  description: Role for copying local ssh public keys to managed hosts.
 
   license: BSD
 

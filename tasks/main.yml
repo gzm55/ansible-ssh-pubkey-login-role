@@ -1,7 +1,7 @@
 ---
-# Basid method is the same as ssh-copyid:
+# Basic method is the same as ssh-copy-id:
 #   - Try ssh login only by pubkey
-#   - If login fail, copy all known keys to the hosts by raw module
+#   - If login fail, copy all known public keys to the hosts via raw module
 
 - name: get ssh options
   register: ssh_options
