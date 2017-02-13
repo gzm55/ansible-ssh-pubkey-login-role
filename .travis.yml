@@ -47,7 +47,6 @@ install:
 
 script:
   - set -e
-  - ansible -vvvvv -i tests/inventory-pass testserver -m ping
 
   # Basic role syntax check
   - echo ========== [syntax check] ==========
@@ -56,6 +55,7 @@ script:
   - echo ========== [run 1st round, no key] ==========
   - true && ! ansible-playbook tests/test.yml -i tests/inventory
   - true && ! ansible-playbook tests/test.yml -i tests/inventory-pass
+  - ansible -vvvvv -i tests/inventory-pass testserver -m ping
 
   - echo ========== [run 2nd round, with uncrypted keys] ==========
   - ssh-keygen -N '' -f ~/.ssh/id_rsa
