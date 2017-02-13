@@ -47,6 +47,7 @@ install:
 
 script:
   - set -e
+  - ansible -vvvvv -i tests/inventory-pass testserver -m ping
 
   # Basic role syntax check
   - echo ========== [syntax check] ==========
