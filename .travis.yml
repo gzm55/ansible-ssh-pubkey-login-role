@@ -55,9 +55,9 @@ script:
   - echo ========== [run 1st round, no key] ==========
   - true && ! ansible-playbook tests/test.yml -i tests/inventory
   - true && ! ansible-playbook tests/test.yml -i tests/inventory-pass
-  - ansible -vvvvv -i tests/inventory-pass testserver -m raw -a exit
 
   - echo ========== [run 2nd round, with uncrypted keys] ==========
+  - ssh -O exit -o Port=4848 -o User=root -o ControlPath=/home/travis/.ansible/cp/ansible-ssh-%h-%p-%r -tt 127.0.0.1
   - ssh-keygen -N '' -f ~/.ssh/id_rsa
   - true && ! ansible-playbook tests/test.yml -i tests/inventory
   - ansible-playbook tests/test.yml -vvv -i tests/inventory-pass
@@ -68,6 +68,7 @@ script:
   - docker exec -i alpine-sshd sh 'rm ~/.ssh -rf'
 
   - echo ========== [run 3rd round, with crypted keys] ==========
+  - ssh -O exit -o Port=4848 -o User=root -o ControlPath=/home/travis/.ansible/cp/ansible-ssh-%h-%p-%r -tt 127.0.0.1
   - ssh-keygen -p -P '' -N '123456' -f ~/.ssh/id_dsa
   - true && ! ansible-playbook tests/test.yml -i tests/inventory
   - true && ! ansible-playbook tests/test.yml -i tests/inventory-pass
