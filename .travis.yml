@@ -53,12 +53,12 @@ script:
   - ansible-playbook tests/test.yml -i tests/inventory --syntax-check
 
   - echo ========== [run 1st round, no key] ==========
-  - if ansible-playbook tests/test.yml -i tests/inventory; then false; else true; fi
+  - true && ! ansible-playbook tests/test.yml -i tests/inventory
   - true && ! ansible-playbook tests/test.yml -i tests/inventory-pass
 
   - echo ========== [run 2nd round, with uncrypted keys] ==========
   - ssh-keygen -N '' -f ~/.ssh/id_rsa
-  - ! ansible-playbook tests/test.yml -i tests/inventory
+  - true && ! ansible-playbook tests/test.yml -i tests/inventory
   - ansible-playbook tests/test.yml -i tests/inventory-pass
   - ansible-playbook tests/test.yml -i tests/inventory
   - rm ~/.ssh/id_rsa ~/.ssh/id_rsa.pub
@@ -68,8 +68,8 @@ script:
 
   - echo ========== [run 3rd round, with crypted keys] ==========
   - ssh-keygen -p -P '' -N '123456' -f ~/.ssh/id_dsa
-  - ! ansible-playbook tests/test.yml -i tests/inventory
-  - ! ansible-playbook tests/test.yml -i tests/inventory-pass
+  - true && ! ansible-playbook tests/test.yml -i tests/inventory
+  - true && ! ansible-playbook tests/test.yml -i tests/inventory-pass
   - eval `ssh-agent`
   - echo | DISPLAY=:0 SSH_ASKPASS="$PWD/ps.sh" ssh-add
   - ansible-playbook tests/test.yml -i tests/inventory
