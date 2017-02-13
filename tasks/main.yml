@@ -85,7 +85,8 @@
                              | reject('exists')
                              | map('regex_replace', '\.pub$', '')
                              | map('quote')
-                             | map('regex_replace', '^', 'ssh-keygen -y -f ')
+                             | map('regex_replace', '^', 'echo | DISPLAY=:0 SSH_ASKPASS={{ role_path | quote }}/fake.sh ssh-keygen -y -f ')
+                             | map('regex_replace', '$', ' || true')
                              | join(';'),
                              ''),
                    wantlist=True)
@@ -97,20 +98,39 @@
       cd;
       umask 077;
       mkdir -p .ssh;
+      { command -v grep || which grep; } >/dev/null \
+      && test -f .ssh/authorized_keys \
+      && grep -F {{ item | quote }} .ssh/authorized_keys \
+      && echo "Alread Installed" \
+      && exit 0;
       echo {{ item | quote }} >> .ssh/authorized_keys
       || exit 1;
       { command -v restorecon || which restorecon; } >/dev/null \
       && restorecon -F .ssh .ssh/authorized_keys;
       exit 0
+    changed_when:
+    - public_key_installed.rc is defined
+    - public_key_installed.rc == 0
+    - public_key_installed.stdout is defined
+    - public_key_installed.stdout | search('Alread Installed') == False
 
-  - name: at least one key installed
-    assert:
-      that: "public_key_installed.results
-             | selectattr('changed', 'defined')
-             | map(attribute='changed')
-             | intersect([True])
-             | list
-             | length > 0"
-      msg: "no key installed!"
+  - name: at least one passphrase-less key installed
+    delegate_to: localhost
+    register: check_login_pubkey
+    expect:
+      command: >
+        {{ ansible_ssh_executable
+           | d(local_ansible_config['ssh_connection/ssh_executable'])
+           | d('ssh', True)
+           | quote }}
+        -o IdentitiesOnly=yes
+        -o KbdInteractiveAuthentication=no
+        -o PreferredAuthentications=publickey
+        -o PasswordAuthentication=no
+        -o ControlPath=none
+        {{ ssh_options.stdout_lines | map('quote') | join(' ') }}
+      responses:
+        '(?i)Enter passphrase for key': ''
+    changed_when: False
 
   when: check_login_pubkey.rc != 0
