@@ -72,7 +72,7 @@ script:
   - docker exec -i alpine-sshd sh -c 'rm ~/.ssh -rf'
   - ssh -O exit -o Port=4848 -o User=root -o ControlPath=/home/travis/.ansible/cp/ansible-ssh-%h-%p-%r -tt 127.0.0.1 || true
   - ssh-keygen -p -P '' -N '123456' -f ~/.ssh/id_dsa
-  - true && ! ansible-playbook tests/test.yml -i tests/inventory
+  - true && ! ansible-playbook tests/test.yml -vvvvv -i tests/inventory
   - true && ! ansible-playbook tests/test.yml -i tests/inventory-pass
   - eval `ssh-agent`
   - echo | DISPLAY=:0 SSH_ASKPASS="$PWD/ps.sh" ssh-add
