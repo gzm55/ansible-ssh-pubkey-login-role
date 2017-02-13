@@ -94,6 +94,7 @@
           | difference([''])
       }}
     raw: >
+      set -x;
       cd;
       umask 077;
       mkdir -p .ssh;
