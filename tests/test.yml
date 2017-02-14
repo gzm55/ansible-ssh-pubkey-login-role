@@ -2,6 +2,7 @@
 - hosts: testserver
   gather_facts: False
   roles:
+  - gzm55.reachable
   - gzm55.local_ssh_known_hosts
   - ansible-ssh-pubkey-login-role
   - ansible-ssh-pubkey-login-role
