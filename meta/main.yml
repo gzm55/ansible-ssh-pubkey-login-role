@@ -35,7 +35,7 @@ dependencies:
   command:
   - cat
   - >
-    {{ ansible_play_batch
+    {{ ansible_play_hosts_all
        | map('extract', hostvars)
        | selectattr('ansible_ssh_executable', 'defined')
        | map(attribute='ansible_ssh_executable')
