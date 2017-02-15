@@ -17,10 +17,7 @@
   register: check_login_pubkey
   expect:
     command: >
-       {{ ansible_ssh_executable
-          | d(local_ansible_config['ssh_connection/ssh_executable'])
-          | d('ssh', True)
-          | quote }}
+       {{ ansible_ssh_executable | quote }}
        -o IdentitiesOnly=yes
        -o KbdInteractiveAuthentication=no
        -o PreferredAuthentications=publickey
@@ -38,10 +35,7 @@
     delegate_to: localhost
     register: debug_identity_files
     raw: >
-         {{ ansible_ssh_executable
-            | d(local_ansible_config['ssh_connection/ssh_executable'])
-            | d('ssh', True)
-            | quote }} \
+         {{ ansible_ssh_executable | quote }} \
          -v \
          -o IdentitiesOnly=yes \
          -o KbdInteractiveAuthentication=no \
@@ -119,10 +113,7 @@
     register: check_login_pubkey
     expect:
       command: >
-        {{ ansible_ssh_executable
-           | d(local_ansible_config['ssh_connection/ssh_executable'])
-           | d('ssh', True)
-           | quote }}
+        {{ ansible_ssh_executable | quote }}
         -o IdentitiesOnly=yes
         -o KbdInteractiveAuthentication=no
         -o PreferredAuthentications=publickey

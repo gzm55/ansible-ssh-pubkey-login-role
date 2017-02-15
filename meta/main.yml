@@ -41,13 +41,14 @@ dependencies:
        | selectattr('ansible_ssh_executable', 'defined')
        | map(attribute='ansible_ssh_executable')
        | list
-       | union(( ansible_play_batch
+       | union(( ansible_play_hosts_all
                  | map('extract', hostvars)
                  | rejectattr('ansible_ssh_executable', 'defined')
                  | list
                  | length == 0 )
                | ternary([],
-                         [local_ansible_config['ssh_connection/ssh_executable']
+                         [lookup('env', 'ANSIBLE_SSH_EXECUTABLE')
+                          | d(local_ansible_config['ssh_connection/ssh_executable'], True)
                           | d('ssh', True)]
                  )
          )
