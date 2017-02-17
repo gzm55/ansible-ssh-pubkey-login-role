@@ -9,6 +9,7 @@
   become: False
   raw: exit
   vars:
+  - ansible_become: False
   - ansible_ssh_executable: "{{ role_path }}/files/dump-ssh-opts.sh"
   failed_when: ssh_options.stderr != ''
   changed_when: False
@@ -17,6 +18,8 @@
   delegate_to: localhost
   register: check_login_pubkey
   become: False
+  vars:
+  - ansible_become: False
   expect:
     command: >
        {{ ansible_ssh_executable | quote }}
@@ -37,6 +40,8 @@
     delegate_to: localhost
     register: debug_identity_files
     become: False
+    vars:
+    - ansible_become: False
     raw: >
          {{ ansible_ssh_executable | quote }} \
          -v \
@@ -53,6 +58,7 @@
     register: public_key_installed
     become: False
     vars:
+    - ansible_become: False
       need_install: "{{ debug_identity_files.stdout_lines is defined }}"
       identity_pubkeys: >
         {{ debug_identity_files.stdout_lines
@@ -116,6 +122,8 @@
     delegate_to: localhost
     register: check_login_pubkey
     become: False
+    vars:
+    - ansible_become: False
     expect:
       command: >
         {{ ansible_ssh_executable | quote }}
