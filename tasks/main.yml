@@ -54,6 +54,9 @@
     failed_when: False
     changed_when: False
 
+          #| unique
+          #| difference([''])
+
   - name: install public keys
     register: public_key_installed
     become: False
@@ -95,8 +98,6 @@
                              ''),
                    wantlist=True)
           )
-          | unique
-          | difference([''])
       }}
     raw: >
       cd;
