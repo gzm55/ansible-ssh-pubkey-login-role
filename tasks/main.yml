@@ -54,16 +54,13 @@
     failed_when: False
     changed_when: False
 
-          #| unique
-          #| difference([''])
-
   - name: install public keys
     register: public_key_installed
     become: False
     vars:
     - ansible_become: False
-      need_install: "{{ debug_identity_files.stdout_lines is defined }}"
-      identity_pubkeys: >
+    - need_install: "{{ debug_identity_files.stdout_lines is defined }}"
+    - identity_pubkeys: >-
         {{ debug_identity_files.stdout_lines
            | d([])
            | select('match', '^debug1: identity file .*$')
@@ -72,7 +69,7 @@
            | select('exists')
            | map('regex_replace', '$', '.pub')
            | list }}
-    with_items: >
+    with_items: >-
       {{  ( lookup('lines',
                    (need_install and require_local_command['PATH='+lookup('env','PATH')|quote]['ssh-add'])
                    | ternary('ssh-add -L || true', ''),
@@ -97,6 +94,8 @@
                              | join(';'),
                              ''),
                    wantlist=True)
+          | unique
+          | difference([''])
           )
       }}
     raw: >

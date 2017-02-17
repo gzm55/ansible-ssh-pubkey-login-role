@@ -90,7 +90,7 @@ script:
   - docker exec -i alpine-sshd sh -c 'rm ~/.ssh -rf'
   - eval `ssh-agent`
   - echo | DISPLAY=:0 SSH_ASKPASS="$PWD/ps.sh" ssh-add
-  - ansible-playbook tests/test.yml -i tests/inventory --become -vvvvv
+  - ansible-playbook tests/test.yml -i tests/inventory --become
 
 notifications:
   webhooks: https://galaxy.ansible.com/api/v1/notifications/
