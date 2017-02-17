@@ -85,5 +85,12 @@ script:
   - echo | DISPLAY=:0 SSH_ASKPASS="$PWD/ps.sh" ssh-add
   - ansible-playbook tests/test.yml -i tests/inventory
 
+  - echo ========== [run 7th round, with --become] ==========
+  - ssh -O exit -o Port=4848 -o User=root -o ControlPath=/home/travis/.ansible/cp/ansible-ssh-%h-%p-%r -tt 127.0.0.1 || true
+  - docker exec -i alpine-sshd sh -c 'rm ~/.ssh -rf' && ssh-keygen -p -P '' -N '123456' -f ~/.ssh/id_rsa
+  - eval `ssh-agent`
+  - echo | DISPLAY=:0 SSH_ASKPASS="$PWD/ps.sh" ssh-add
+  - ansible-playbook tests/test.yml -i tests/inventory --become
+
 notifications:
   webhooks: https://galaxy.ansible.com/api/v1/notifications/
