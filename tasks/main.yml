@@ -54,24 +54,6 @@
     failed_when: False
     changed_when: False
 
-          #+ lookup('lines',
-                   #identity_pubkeys
-                   #| select('exists')
-                   #| map('quote')
-                   #| map('regex_replace', '^', 'cat ')
-                   #| join(';'),
-                   #wantlist=True)
-          #+ lookup('lines',
-                   #(need_install and require_local_command['PATH='+lookup('env','PATH')|quote]['ssh-keygen'])
-                   #| ternary(identity_pubkeys
-                             #| reject('exists')
-                             #| map('regex_replace', '\.pub$', '')
-                             #| map('quote')
-                             #| map('regex_replace', '^', 'echo | DISPLAY=:0 SSH_ASKPASS={{ role_path | quote }}/fake.sh ssh-keygen -y -f ')
-                             #| map('regex_replace', '$', ' || true')
-                             #| join(';'),
-                             #''),
-                   #wantlist=True)
           #| unique
           #| difference([''])
 
@@ -94,7 +76,27 @@
       {{  ( lookup('lines',
                    (need_install and require_local_command['PATH='+lookup('env','PATH')|quote]['ssh-add'])
                    | ternary('ssh-add -L || true', ''),
-                   wanglist=True) | reject('match', 'The agent has no identities.') | list
+                   wantlist=True)
+            | reject('match', 'The agent has no identities.')
+            | list
+          + lookup('lines',
+                   identity_pubkeys
+                   | select('exists')
+                   | map('quote')
+                   | map('regex_replace', '^', 'cat ')
+                   | join(';'),
+                   wantlist=True)
+          + lookup('lines',
+                   (need_install and require_local_command['PATH='+lookup('env','PATH')|quote]['ssh-keygen'])
+                   | ternary(identity_pubkeys
+                             | reject('exists')
+                             | map('regex_replace', '\.pub$', '')
+                             | map('quote')
+                             | map('regex_replace', '^', 'echo | DISPLAY=:0 SSH_ASKPASS={{ role_path | quote }}/fake.sh ssh-keygen -y -f ')
+                             | map('regex_replace', '$', ' || true')
+                             | join(';'),
+                             ''),
+                   wantlist=True)
           )
       }}
     raw: >
