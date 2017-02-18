@@ -54,6 +54,9 @@
     failed_when: False
     changed_when: False
 
+          #| unique
+          #| difference([''])
+
   - name: install public keys
     register: public_key_installed
     become: False
@@ -75,15 +78,13 @@
                    | ternary('ssh-add -L || true', ''),
                    wanglist=True)
             | reject('match', 'The agent has no identities.')
-            | list
-          + lookup('lines',
+            | list + lookup('lines',
                    identity_pubkeys
                    | select('exists')
                    | map('quote')
                    | map('regex_replace', '^', 'cat ')
                    | join(';'),
-                   wantlist=True)
-          + lookup('lines',
+                   wantlist=True) + lookup('lines',
                    (need_install and require_local_command['PATH='+lookup('env','PATH')|quote]['ssh-keygen'])
                    | ternary(identity_pubkeys
                              | reject('exists')
@@ -94,8 +95,6 @@
                              | join(';'),
                              ''),
                    wantlist=True)
-          | unique
-          | difference([''])
           )
       }}
     raw: >
