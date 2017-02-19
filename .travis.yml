@@ -91,6 +91,8 @@ script:
   - eval `ssh-agent`
   - echo | DISPLAY=:0 SSH_ASKPASS="$PWD/ps.sh" ssh-add
   - ansible-playbook tests/test.yml -i tests/inventory-pass --become
+  - docker exec alpine-sshd sh -c 'cat $HOME/.ssh/authorized_keys'
+  - cat ~/.ssh/id_rsa.pub
   - set -x
   - test "$(docker exec alpine-sshd sh -c 'cat $HOME/.ssh/authorized_keys' | cut -d ' ' -f 1,2 | md5sum)" = "$(cat ~/.ssh/id_rsa.pub | cut -d ' ' -f 1,2 | md5sum)"
 
