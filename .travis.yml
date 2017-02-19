@@ -92,7 +92,7 @@ script:
   - echo | DISPLAY=:0 SSH_ASKPASS="$PWD/ps.sh" ssh-add
   - ansible-playbook tests/test.yml -i tests/inventory-pass --become
   - set -x
-  - test "$(docker exec alpine-sshd sh -c 'cat $HOME/.ssh/authorized_keys' | md5sum)" = "$(cat ~/.ssh/id_rsa.pub | md5sum)"
+  - test "$(docker exec alpine-sshd sh -c 'cat $HOME/.ssh/authorized_keys' | cut -d ' ' -f 1,2 | md5sum)" = "$(cat ~/.ssh/id_rsa.pub | cut -d ' ' -f 1,2 | md5sum)"
 
 notifications:
   webhooks: https://galaxy.ansible.com/api/v1/notifications/
