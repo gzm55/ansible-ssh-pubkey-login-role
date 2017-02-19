@@ -94,7 +94,7 @@ script:
   - docker exec alpine-sshd sh -c 'cat $HOME/.ssh/authorized_keys'
   - cat ~/.ssh/id_rsa.pub
   - set -x
-  - test "$(docker exec alpine-sshd sh -c 'cat $HOME/.ssh/authorized_keys' | cut -d ' ' -f 1,2 | md5sum)" = "$(cat ~/.ssh/id_rsa.pub | cut -d ' ' -f 1,2 | md5sum)"
+  - test "$(docker exec alpine-sshd sh -c 'cat $HOME/.ssh/authorized_keys' | cut -d ' ' -f 1,2 | uniq | md5sum)" = "$(cat ~/.ssh/id_rsa.pub | cut -d ' ' -f 1,2 | md5sum)"
 
 notifications:
   webhooks: https://galaxy.ansible.com/api/v1/notifications/
