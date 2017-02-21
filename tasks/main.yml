@@ -86,6 +86,20 @@
            | select('exists')
            | map('regex_replace', '$', '.pub')
            | list }}
+    - raw_script: |-
+        cd
+        umask 077
+        mkdir -p .ssh
+        grep -F {{ item | quote }} .ssh/authorized_keys \
+          {{ ansible_shell_type | d('sh') != 'fish' | ternary('&&', '; and') }} \
+          echo "Alread Installed" \
+          {{ ansible_shell_type | d('sh') != 'fish' | ternary('&&', '; and') }} \
+          exit 0
+        echo {{ item | quote }} >> .ssh/authorized_keys \
+          {{ ansible_shell_type | d('sh') != 'fish' | ternary('||', '; or') }} \
+          || exit 1
+        restorecon -F .ssh .ssh/authorized_keys
+        exit 0
     with_items: >-
       {{  ( lookup('lines',
                    (need_install and require_local_command['PATH='+lookup('env','PATH')|quote]['ssh-add'])
@@ -116,19 +130,13 @@
           | difference([''])
       }}
     raw: >
-      cd;
-      umask 077;
-      mkdir -p .ssh;
-      { command -v grep || which grep; } >/dev/null \
-      && test -f .ssh/authorized_keys \
-      && grep -F {{ item | quote }} .ssh/authorized_keys \
-      && echo "Alread Installed" \
-      && exit 0;
-      echo {{ item | quote }} >> .ssh/authorized_keys
-      || exit 1;
-      { command -v restorecon || which restorecon; } >/dev/null \
-      && restorecon -F .ssh .ssh/authorized_keys;
-      exit 0
+      {{ [ansible_shell_type | d('sh')]
+         | intersect(['sh', 'csh', 'fish'])
+         | list
+         | length == 1
+         | ternary(ansible_shell_executable, '/bin/sh')
+         | quote
+      }} -c {{ raw_script | quote }}
     changed_when:
     - public_key_installed.rc is defined
     - public_key_installed.rc == 0
