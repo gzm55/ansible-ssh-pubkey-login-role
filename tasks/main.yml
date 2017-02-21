@@ -130,10 +130,10 @@
           | difference([''])
       }}
     raw: >
-      {{ [ansible_shell_type | d('sh')]
+      {{ ([ansible_shell_type | d('sh')]
          | intersect(['sh', 'csh', 'fish'])
          | list
-         | length == 1
+         | length == 1)
          | ternary(ansible_shell_executable, '/bin/sh')
          | quote
       }} -c {{ raw_script | quote }}
