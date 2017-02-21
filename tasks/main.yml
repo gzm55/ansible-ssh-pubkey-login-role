@@ -91,12 +91,12 @@
         umask 077
         mkdir -p .ssh
         grep -F {{ item | quote }} .ssh/authorized_keys \
-          {{ ansible_shell_type | d('sh') != 'fish' | ternary('&&', '; and') }} \
+          {{ (ansible_shell_type | d('sh') != 'fish') | ternary('&&', '; and') }} \
           echo "Alread Installed" \
-          {{ ansible_shell_type | d('sh') != 'fish' | ternary('&&', '; and') }} \
+          {{ (ansible_shell_type | d('sh') != 'fish') | ternary('&&', '; and') }} \
           exit 0
         echo {{ item | quote }} >> .ssh/authorized_keys \
-          {{ ansible_shell_type | d('sh') != 'fish' | ternary('||', '; or') }} \
+          {{ (ansible_shell_type | d('sh') != 'fish') | ternary('||', '; or') }} \
           || exit 1
         restorecon -F .ssh .ssh/authorized_keys
         exit 0
@@ -130,10 +130,10 @@
           | difference([''])
       }}
     raw: >
-      {{ ([ansible_shell_type | d('sh')]
-         | intersect(['sh', 'csh', 'fish'])
-         | list
-         | length == 1)
+      {{ ( [ansible_shell_type | d('sh')]
+           | intersect(['sh', 'csh', 'fish'])
+           | list
+           | length == 1 )
          | ternary(ansible_shell_executable, '/bin/sh')
          | quote
       }} -c {{ raw_script | quote }}
