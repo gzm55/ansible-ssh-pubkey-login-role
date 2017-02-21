@@ -36,6 +36,8 @@ N/A
 Dependencies
 ------------
 
+* `gzm55.require_implicity_localhost`
+* `gzm55.require_disabe_become`
 * `gzm55.local_ansible_config`
 * `gzm55.require_local_command`
 

@@ -3,13 +3,24 @@
 #   - Try ssh login only by pubkey
 #   - If login fail, copy all known public keys to the hosts via raw module
 
+- name: override ssh ansible_ssh_executable
+  run_once: True
+  when: inventory_hostname == ansible_play_hosts[0]
+  connection: ssh
+  vars:
+  - ansible_connection: ssh
+  - ansible_ssh_executable: "{{ role_path }}/files/dump-ssh-opts.sh"
+  assert:
+    that:
+    - "[ansible_connection] | intersect(['ssh', 'smart']) | list | length == 1"
+    - "ansible_ssh_executable == (role_path + '/files/dump-ssh-opts.sh')"
+
 - name: get ssh options
   register: ssh_options
   connection: ssh
-  become: False
   raw: exit
   vars:
-  - ansible_become: False
+  - ansible_connection: ssh
   - ansible_ssh_executable: "{{ role_path }}/files/dump-ssh-opts.sh"
   failed_when: ssh_options.stderr != ''
   changed_when: False
@@ -18,8 +29,10 @@
   delegate_to: localhost
   register: check_login_pubkey
   become: False
+  become_user: "{{ ansible_user | d(ansible_local_user, True) }}"
   vars:
   - ansible_become: False
+  - ansible_become_user: "{{ ansible_user | d(ansible_local_user, True) }}"
   expect:
     command: >
        {{ ansible_ssh_executable | quote }}
@@ -40,8 +53,10 @@
     delegate_to: localhost
     register: debug_identity_files
     become: False
+    become_user: "{{ ansible_user | d(ansible_local_user, True) }}"
     vars:
     - ansible_become: False
+    - ansible_become_user: "{{ ansible_user | d(ansible_local_user, True) }}"
     raw: >
          {{ ansible_ssh_executable | quote }} \
          -v \
@@ -54,14 +69,13 @@
     failed_when: False
     changed_when: False
 
-          #| unique
-          #| difference([''])
-
   - name: install public keys
     register: public_key_installed
     become: False
+    become_user: "{{ ansible_user | d(ansible_local_user, True) }}"
     vars:
     - ansible_become: False
+    - ansible_become_user: "{{ ansible_user | d(ansible_local_user, True) }}"
     - need_install: "{{ debug_identity_files.stdout_lines is defined }}"
     - identity_pubkeys: >-
         {{ debug_identity_files.stdout_lines
@@ -98,6 +112,8 @@
                              ''),
                    wantlist=True)
           )
+          | unique
+          | difference([''])
       }}
     raw: >
       cd;
@@ -121,10 +137,11 @@
 
   - name: at least one passphrase-less key installed
     delegate_to: localhost
-    register: check_login_pubkey
     become: False
+    become_user: "{{ ansible_user | d(ansible_local_user, True) }}"
     vars:
     - ansible_become: False
+    - ansible_become_user: "{{ ansible_user | d(ansible_local_user, True) }}"
     expect:
       command: >
         {{ ansible_ssh_executable | quote }}
