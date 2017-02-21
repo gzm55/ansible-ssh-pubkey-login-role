@@ -97,7 +97,7 @@
           exit 0
         echo {{ item | quote }} >> .ssh/authorized_keys \
           {{ (ansible_shell_type | d('sh') != 'fish') | ternary('||', '; or') }} \
-          || exit 1
+          exit 1
         restorecon -F .ssh .ssh/authorized_keys
         exit 0
     with_items: >-
