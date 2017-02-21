@@ -1,0 +1,1 @@
+testserver ansible_host=127.0.0.1 ansible_port=4848 ansible_user=root ansible_ssh_pass=123456 ansible_shell_executable=/usr/bin/fish ansible_shell_type=fish
