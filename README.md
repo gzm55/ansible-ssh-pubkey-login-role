@@ -1,5 +1,5 @@
 ssh_pubkey_login
-=========
+================
 
 Role for copying local ssh public keys to managed hosts.
 Only need ansible raw module on remote hosts to install new keys,
@@ -18,15 +18,15 @@ On the control machine, Python Modules:
 * pexpect>=3.3
 
 On the control machine, commands:
-* shell, e.g. /bin/sh
 * `cat` command
 * `ssh` command
-* (optional) ssh-keygen
-* (optional) ssh-add
+* (optional) `ssh-keygen` command
+* (optional) `ssh-add` command
 
 On the Remote machine:
-* shell, e.g. /bin/sh
+* a shell of type `sh`, `csh` or `fish`
 * `echo` command
+* (optional) `grep` command
 
 Role Variables
 --------------
