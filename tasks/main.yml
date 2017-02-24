@@ -5,15 +5,26 @@
 
 - name: override ssh ansible_ssh_executable
   run_once: True
-  when: inventory_hostname == ansible_play_hosts[0]
+  when:
+  - inventory_hostname == ansible_play_hosts[0]
+  - ( [ groups.all
+        | map('extract', hostvars, 'ansible_ssh_executable')
+        | unique
+        | map('d', omit ) ]
+    )
+    | difference([[omit]])
+    | first
+    | d([])
+    | list
+    | length == 1
   connection: ssh
   vars:
   - ansible_connection: ssh
-  - ansible_ssh_executable: "{{ role_path }}/files/dump-ssh-opts.sh"
+  - ansible_ssh_executable: "{{ omit }}"
   assert:
     that:
     - "[ansible_connection] | intersect(['ssh', 'smart']) | list | length == 1"
-    - "ansible_ssh_executable == (role_path + '/files/dump-ssh-opts.sh')"
+    - "ansible_ssh_executable == omit"
 
 - name: get ssh options
   register: ssh_options
