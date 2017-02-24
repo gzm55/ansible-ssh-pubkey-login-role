@@ -4,7 +4,7 @@ galaxy_info:
 
   license: BSD
 
-  min_ansible_version: 2.2
+  min_ansible_version: 2.1
 
   platforms:
   - name: GenericBSD
@@ -34,15 +34,18 @@ dependencies:
   command: [ ssh-add, ssh-keygen ]
 
 - role: gzm55.require_local_command
+  only_check: False
   command:
   - cat
   - >
     {{ ansible_play_hosts_all
+       | d(ansible_play_hosts)
        | map('extract', hostvars)
        | selectattr('ansible_ssh_executable', 'defined')
        | map(attribute='ansible_ssh_executable')
        | list
        | union(( ansible_play_hosts_all
+                 | d(ansible_play_hosts)
                  | map('extract', hostvars)
                  | rejectattr('ansible_ssh_executable', 'defined')
                  | list
