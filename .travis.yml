@@ -112,7 +112,7 @@ script:
   - test "$(docker exec alpine-sshd sh -c 'cat $HOME/.ssh/authorized_keys' | cut -d ' ' -f 1,2 | uniq | md5sum)" = "$(cat ~/.ssh/id_rsa.pub | cut -d ' ' -f 1,2 | md5sum)"
 
   - echo ========== [run 9th round, centos with csh shell] ==========
-  - ansible-playbook tests/test.yml -i tests/inventory-csh
+  - ansible-playbook tests/test.yml -i tests/inventory-csh -vvvvv
   - test "$(docker exec centos-sshd sh -c 'cat $HOME/.ssh/authorized_keys' | cut -d ' ' -f 1,2 | uniq | md5sum)" = "$(cat ~/.ssh/id_rsa.pub | cut -d ' ' -f 1,2 | md5sum)"
 
 notifications:
