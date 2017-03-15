@@ -38,6 +38,17 @@ install:
   - ssh-keygen -f "~/.ssh/known_hosts" -R [localhost]:4848 || true
   - echo -e "123456\n123456" | docker exec -i alpine-sshd passwd
 
+  # Start a centos 7 sshd container for testing
+  # - listen on localhost:5848
+  # - enable root login
+  # - root login via pubkey
+  - docker pull centos:7
+  - docker rm -f centos-sshd || true
+  - docker run -p 5848:22 --name centos-sshd --hostname centos-sshd -d centos:7 sh -c 'yum --assumeyes install openssh-server tcsh && echo "PermitRootLogin yes" >> /etc/ssh/sshd_config && ssh-keygen -f /etc/ssh/ssh_host_rsa_key -N "" -t rsa && ssh-keygen -f /etc/ssh/ssh_host_dsa_key -N "" -t dsa && mkdir -p /var/run/sshd && exec /usr/sbin/sshd -D'
+  - cat ~/.ssh/id_rsa.pub | docker exec -i centos-sshd sh -c 'cd; umask 077; mkdir -p .ssh; tee -a .ssh/authorized_keys'
+  - ssh-keygen -f ~/.ssh/known_hosts -R [localhost]:5848 || true
+  - echo -e "123456\n123456" | docker exec -i centos-sshd passwd
+
   # Create ansible.cfg with correct roles_path
   - printf '[defaults]\nroles_path=../\n' >ansible.cfg
 
@@ -99,6 +110,10 @@ script:
   - docker exec -i alpine-sshd sh -c 'apk update && apk add fish bc'
   - ansible-playbook tests/test.yml -i tests/inventory-fish
   - test "$(docker exec alpine-sshd sh -c 'cat $HOME/.ssh/authorized_keys' | cut -d ' ' -f 1,2 | uniq | md5sum)" = "$(cat ~/.ssh/id_rsa.pub | cut -d ' ' -f 1,2 | md5sum)"
+
+  - echo ========== [run 9th round, centos with csh shell] ==========
+  - ansible-playbook tests/test.yml -i tests/inventory-csh
+  - test "$(docker exec centos-sshd sh -c 'cat $HOME/.ssh/authorized_keys' | cut -d ' ' -f 1,2 | uniq | md5sum)" = "$(cat ~/.ssh/id_rsa.pub | cut -d ' ' -f 1,2 | md5sum)"
 
 notifications:
   webhooks: https://galaxy.ansible.com/api/v1/notifications/

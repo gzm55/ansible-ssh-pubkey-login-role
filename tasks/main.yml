@@ -97,19 +97,37 @@
            | select('exists')
            | map('regex_replace', '$', '.pub')
            | list }}
+    - shell_exec: >-
+        {{ ( [ansible_shell_type | d('sh')]
+             | intersect(['sh', 'csh', 'fish'])
+             | list
+             | length == 1
+             and ansible_version.full | version_compare('2.1', '>='))
+           | ternary(ansible_shell_executable, '/bin/sh')
+        }}
+    - shell_type: >-
+        {{ ( [ansible_shell_type | d('')]
+             | intersect(['sh', 'csh', 'fish'])
+             | list
+             | length == 1 )
+           | ternary(ansible_shell_type, 'sh')
+        }}
+    - shell_backslash: >-
+                       {% raw -%}\{%- endraw %}
+    - shell_and:       "{{ (shell_type == 'fish') | ternary('; and',     '&&'        ) }}"
+    - shell_or:        "{{ (shell_type == 'fish') | ternary('; or',      '||'        ) }}"
+    - shell_exit:      "{{ (shell_type == 'csh')  | ternary('eval exit', 'exit'      ) }}"
+    - shell_newline:   "{{ (shell_type == 'csh')  | ternary(';' + shell_backslash, '') }}"
     - raw_script: |-
         cd
         umask 077
         mkdir -p .ssh
         grep -F {{ item | quote }} .ssh/authorized_keys \
-          {{ (ansible_shell_type | d('sh') != 'fish') | ternary('&&', '; and') }} \
-          echo "Alread Installed" \
-          {{ (ansible_shell_type | d('sh') != 'fish') | ternary('&&', '; and') }} \
-          exit 0
+          {{ shell_and }} echo "Alread Installed" \
+          {{ shell_and }} {{ shell_exit }} 0{{shell_newline}}
         echo {{ item | quote }} >> .ssh/authorized_keys \
-          {{ (ansible_shell_type | d('sh') != 'fish') | ternary('||', '; or') }} \
-          exit 1
-        restorecon -F .ssh .ssh/authorized_keys
+          {{ shell_or }} {{ shell_exit }} 1{{shell_newline}}
+        restorecon -F .ssh .ssh/authorized_keys{{shell_newline}}
         exit 0
     with_items: >-
       {{  ( lookup('lines',
@@ -140,14 +158,7 @@
           | unique
           | difference([''])
       }}
-    raw: >
-      {{ ( [ansible_shell_type | d('sh')]
-           | intersect(['sh', 'csh', 'fish'])
-           | list
-           | length == 1 )
-         | ternary(ansible_shell_executable, '/bin/sh')
-         | quote
-      }} -c {{ raw_script | quote }}
+    raw: "{{ shell_exec | quote }} -c {{ raw_script | quote }}"
     changed_when:
     - public_key_installed.rc is defined
     - public_key_installed.rc == 0
