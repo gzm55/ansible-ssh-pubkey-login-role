@@ -1,5 +1,5 @@
 ---
-- name: asdf
+- name: include ssh-copy-id tasks if needed
   include: tasks/ssh-copy-id.yml
   static: no
   when:

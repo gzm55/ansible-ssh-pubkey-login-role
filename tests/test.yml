@@ -1,5 +1,5 @@
 ---
-- hosts: testserver
+- hosts: all
   gather_facts: False
   roles:
   - gzm55.reachable
