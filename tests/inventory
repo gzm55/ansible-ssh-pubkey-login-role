@@ -1,1 +1,3 @@
 testserver ansible_host=127.0.0.1 ansible_port=4848 ansible_user=root
+disabled-server ansible_pubkey_login_is_disabled=true
+docker-server ansible_connection=docker
