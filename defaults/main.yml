@@ -1,0 +1,2 @@
+---
+ansible_pubkey_login_is_disabled: False

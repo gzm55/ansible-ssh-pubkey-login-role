@@ -21,7 +21,10 @@ install:
   - which ssh-add
 
   # Install ansible
-  - pip install ansible
+  - pip install ansible ansible-lint
+
+  # patch ansible-lint issue 250
+  - sed -i '/^\s*_jinja = re\.compile([^),]*)/ s/)\s*$/, re.DOTALL)/' `python -c "import os, ansiblelint; print(os.path.dirname(os.path.abspath(ansiblelint.__file__))+'/rules/UsingBareVariablesIsDeprecatedRule.py')"`
 
   # Check ansible version
   - ansible --version
@@ -62,6 +65,8 @@ script:
   # Basic role syntax check
   - echo ========== [syntax check] ==========
   - ansible-playbook tests/test.yml -i tests/inventory --syntax-check
+  - ansible-lint .
+  - ansible-lint tests/test.yml
 
   - echo ========== [run 1st round, no key] ==========
   - true && ! ansible-playbook tests/test.yml -i tests/inventory

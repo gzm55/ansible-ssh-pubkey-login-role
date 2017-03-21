@@ -9,6 +9,9 @@ Basic method is the same as ssh-copyid:
 - Try ssh login only by pubkey
 - If login fail, copy all known public keys to the hosts via raw module
 
+If a managed host has a `ansible_connection` other than `ssh`, `paramiko` or `smart`,
+it will be skipped installing the public keys.
+
 Requirements
 ------------
 
@@ -31,7 +34,8 @@ On the Remote machine:
 Role Variables
 --------------
 
-N/A
+- `ansible_pubkey_login_is_disabled`, default is False, if set to True,
+      this role skips install pubkey to remote machines, and have to login via password.
 
 Dependencies
 ------------
