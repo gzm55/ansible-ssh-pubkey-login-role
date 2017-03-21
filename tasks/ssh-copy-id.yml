@@ -6,7 +6,6 @@
 - name: override ssh ansible_ssh_executable
   run_once: True
   when:
-  - inventory_hostname == ansible_play_hosts[0]
   - ( [ groups.all
         | map('extract', hostvars, 'ansible_ssh_executable')
         | unique
