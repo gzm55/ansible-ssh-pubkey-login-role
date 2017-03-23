@@ -35,153 +35,160 @@
   failed_when: ssh_options.stderr != ''
   changed_when: False
 
-- name: ssh private keys should be alread in agent or without passwords
-  delegate_to: localhost
-  register: check_login_pubkey
-  become: False
-  become_user: "{{ ansible_user | d(lookup('id', 'euname'), True) }}"
-  vars:
-  - ansible_become: False
-  - ansible_become_user: "{{ ansible_user | d(lookup('id', 'euname'), True) }}"
-  expect:
-    command: >
-       {{ ansible_ssh_executable | quote }}
-       -o IdentitiesOnly=yes
-       -o KbdInteractiveAuthentication=no
-       -o PreferredAuthentications=publickey
-       -o PasswordAuthentication=no
-       -o ControlPath=none
-       {{ ssh_options.stdout_lines | map('quote') | join(' ') }}
-    responses:
-      '(?i)Enter passphrase for key': ''
-  failed_when: check_login_pubkey.stdout is not defined or check_login_pubkey.stdout | search('Enter passphrase for key')
-  changed_when: False
-
 - block:
-
-  - name: list identity files
+  - name: ssh private keys should be alread in agent or without passwords
     delegate_to: localhost
-    register: debug_identity_files
-    become: False
-    become_user: "{{ ansible_user | d(lookup('id', 'euname'), True) }}"
-    vars:
-    - ansible_become: False
-    - ansible_become_user: "{{ ansible_user | d(lookup('id', 'euname'), True) }}"
-    raw: >
-         {{ ansible_ssh_executable | quote }} \
-         -v \
-         -o IdentitiesOnly=yes \
-         -o KbdInteractiveAuthentication=no \
-         -o PreferredAuthentications=publickey \
-         -o PasswordAuthentication=no \
-         -o ControlPath=none \
-         {{ ssh_options.stdout_lines | reject('match', '^-v+$') | map('quote') | join(' ') }} 2>&1
-    failed_when: False
-    changed_when: False
-
-  - name: install public keys
-    register: public_key_installed
-    become: False
-    become_user: "{{ ansible_user | d(lookup('id', 'euname'), True) }}"
-    vars:
-    - ansible_become: False
-    - ansible_become_user: "{{ ansible_user | d(lookup('id', 'euname'), True) }}"
-    - need_install: "{{ debug_identity_files.stdout_lines is defined }}"
-    - identity_pubkeys: >-
-        {{ debug_identity_files.stdout_lines
-           | d([])
-           | select('match', '^debug1: identity file .*$')
-           | map('regex_replace', '^debug1: identity file |(-cert)? type [^ ]+$', '')
-           | unique
-           | select('exists')
-           | map('regex_replace', '$', '.pub')
-           | list }}
-    - shell_exec: >-
-        {{ ( [ansible_shell_type | d('sh')]
-             | intersect(['sh', 'csh', 'fish'])
-             | list
-             | length == 1
-             and ansible_version.full | version_compare('2.1', '>='))
-           | ternary(ansible_shell_executable, '/bin/sh')
-        }}
-    - shell_type: >-
-        {{ ( [ansible_shell_type | d('')]
-             | intersect(['sh', 'csh', 'fish'])
-             | list
-             | length == 1 )
-           | ternary(ansible_shell_type, 'sh')
-        }}
-    - shell_backslash: >-
-                       {% raw -%}\{%- endraw %}
-    - shell_and:       "{{ (shell_type == 'fish') | ternary('; and',     '&&'        ) }}"
-    - shell_or:        "{{ (shell_type == 'fish') | ternary('; or',      '||'        ) }}"
-    - shell_exit:      "{{ (shell_type == 'csh')  | ternary('eval exit', 'exit'      ) }}"
-    - shell_newline:   "{{ (shell_type == 'csh')  | ternary(';' + shell_backslash, '') }}"
-    - raw_script: |-
-        cd
-        umask 077
-        mkdir -p .ssh
-        grep -F {{ item | quote }} .ssh/authorized_keys \
-          {{ shell_and }} echo "Alread Installed" \
-          {{ shell_and }} {{ shell_exit }} 0{{shell_newline}}
-        echo {{ item | quote }} >> .ssh/authorized_keys \
-          {{ shell_or }} {{ shell_exit }} 1{{shell_newline}}
-        restorecon -F .ssh .ssh/authorized_keys{{shell_newline}}
-        exit 0
-    with_items: >-
-      {{  ( lookup('lines',
-                   (need_install and require_local_command['PATH='+lookup('env','PATH')|quote]['ssh-add'])
-                   | ternary('ssh-add -L || true', ''),
-                   wantlist=True)
-            | reject('match', 'The agent has no identities.')
-            | list
-          + lookup('lines',
-                   identity_pubkeys
-                   | select('exists')
-                   | map('quote')
-                   | map('regex_replace', '^', 'cat ')
-                   | join(';'),
-                   wantlist=True)
-          + lookup('lines',
-                   (need_install and require_local_command['PATH='+lookup('env','PATH')|quote]['ssh-keygen'])
-                   | ternary(identity_pubkeys
-                             | reject('exists')
-                             | map('regex_replace', '\.pub$', '')
-                             | map('quote')
-                             | map('regex_replace', '^', 'echo | DISPLAY=:0 SSH_ASKPASS={{ role_path | quote }}/fake.sh ssh-keygen -y -f ')
-                             | map('regex_replace', '$', ' || true')
-                             | join(';'),
-                             ''),
-                   wantlist=True)
-          )
-          | unique
-          | difference([''])
-      }}
-    raw: "{{ shell_exec | quote }} -c {{ raw_script | quote }}"
-    changed_when:
-    - public_key_installed.rc is defined
-    - public_key_installed.rc == 0
-    - public_key_installed.stdout is defined
-    - public_key_installed.stdout | search('Alread Installed') == False
-
-  - name: at least one passphrase-less key installed
-    delegate_to: localhost
-    become: False
-    become_user: "{{ ansible_user | d(lookup('id', 'euname'), True) }}"
-    vars:
-    - ansible_become: False
-    - ansible_become_user: "{{ ansible_user | d(lookup('id', 'euname'), True) }}"
+    register: check_login_pubkey
     expect:
-      command: >
-        {{ ansible_ssh_executable | quote }}
-        -o IdentitiesOnly=yes
-        -o KbdInteractiveAuthentication=no
-        -o PreferredAuthentications=publickey
-        -o PasswordAuthentication=no
-        -o ControlPath=none
-        {{ ssh_options.stdout_lines | map('quote') | join(' ') }}
+      command: >-
+         {{ ansible_ssh_executable | quote }}
+         -o IdentitiesOnly=yes
+         -o KbdInteractiveAuthentication=no
+         -o PreferredAuthentications=publickey
+         -o PasswordAuthentication=no
+         -o ControlPath=none
+         {{ ssh_options.stdout_lines | map('quote') | join(' ') }}
       responses:
         '(?i)Enter passphrase for key': ''
+    failed_when: check_login_pubkey.stdout is not defined or check_login_pubkey.stdout | search('Enter passphrase for key')
     changed_when: False
 
-  when: check_login_pubkey.rc != 0
+  - block:
+
+    - name: list identity files
+      delegate_to: localhost
+      register: debug_identity_files
+      raw: >-
+           {{ ansible_ssh_executable | quote }} \
+           -v \
+           -o IdentitiesOnly=yes \
+           -o KbdInteractiveAuthentication=no \
+           -o PreferredAuthentications=publickey \
+           -o PasswordAuthentication=no \
+           -o ControlPath=none \
+           {{ ssh_options.stdout_lines | reject('match', '^-v+$') | map('quote') | join(' ') }} 2>&1
+      failed_when: False
+      changed_when: False
+
+    - name: install public keys
+      register: public_key_installed
+      vars:
+      - need_install: "{{ debug_identity_files.stdout_lines is defined }}"
+      - identity_pubkeys: >-
+          {{ debug_identity_files.stdout_lines
+             | d([])
+             | select('match', '^debug1: identity file .*$')
+             | map('regex_replace', '^debug1: identity file |(-cert)? type [^ ]+$', '')
+             | unique
+             | select('exists')
+             | map('regex_replace', '$', '.pub')
+             | list }}
+      - shell_exec: >-
+          {{ ( [ansible_shell_type | d('sh')]
+               | intersect(['sh', 'csh', 'fish'])
+               | list
+               | length == 1
+               and ansible_version.full | version_compare('2.1', '>='))
+             | ternary(ansible_shell_executable, '/bin/sh')
+          }}
+      - shell_type: >-
+          {{ ( [ansible_shell_type | d('')]
+               | intersect(['sh', 'csh', 'fish'])
+               | list
+               | length == 1 )
+             | ternary(ansible_shell_type, 'sh')
+          }}
+      - shell_backslash: >-
+                         {% raw -%}\{%- endraw %}
+      - shell_and:       "{{ (shell_type == 'fish') | ternary('; and',     '&&'        ) }}"
+      - shell_or:        "{{ (shell_type == 'fish') | ternary('; or',      '||'        ) }}"
+      - shell_exit:      "{{ (shell_type == 'csh')  | ternary('eval exit', 'exit'      ) }}"
+      - shell_newline:   "{{ (shell_type == 'csh')  | ternary(';' + shell_backslash, '') }}"
+      - raw_script: |-
+          cd
+          umask 077
+          mkdir -p .ssh
+          grep -F {{ item | quote }} .ssh/authorized_keys \
+            {{ shell_and }} echo "Alread Installed" \
+            {{ shell_and }} {{ shell_exit }} 0{{shell_newline}}
+          echo {{ item | quote }} >> .ssh/authorized_keys \
+            {{ shell_or }} {{ shell_exit }} 1{{shell_newline}}
+          restorecon -F .ssh .ssh/authorized_keys{{shell_newline}}
+          exit 0
+      with_items: >-
+        {{  ( lookup('lines',
+                     (need_install and require_local_command['PATH='+lookup('env','PATH')|quote]['ssh-add'])
+                     | ternary('ssh-add -L || true', ''),
+                     wantlist=True)
+              | reject('match', 'The agent has no identities.')
+              | list
+            + lookup('lines',
+                     identity_pubkeys
+                     | select('exists')
+                     | map('quote')
+                     | map('regex_replace', '^', 'cat ')
+                     | join(';'),
+                     wantlist=True)
+            + lookup('lines',
+                     (need_install and require_local_command['PATH='+lookup('env','PATH')|quote]['ssh-keygen'])
+                     | ternary(identity_pubkeys
+                               | reject('exists')
+                               | map('regex_replace', '\.pub$', '')
+                               | map('quote')
+                               | map('regex_replace', '^', 'echo | DISPLAY=:0 SSH_ASKPASS={{ role_path | quote }}/fake.sh ssh-keygen -y -f ')
+                               | map('regex_replace', '$', ' || true')
+                               | join(';'),
+                               ''),
+                     wantlist=True)
+            )
+            | unique
+            | difference([''])
+        }}
+      raw: "{{ shell_exec | quote }} -c {{ raw_script | quote }}"
+      changed_when:
+      - public_key_installed.rc is defined
+      - public_key_installed.rc == 0
+      - public_key_installed.stdout is defined
+      - public_key_installed.stdout | search('Alread Installed') == False
+
+    - name: at least one passphrase-less key installed
+      delegate_to: localhost
+      expect:
+        command: >
+          {{ ansible_ssh_executable | quote }}
+          -o IdentitiesOnly=yes
+          -o KbdInteractiveAuthentication=no
+          -o PreferredAuthentications=publickey
+          -o PasswordAuthentication=no
+          -o ControlPath=none
+          {{ ssh_options.stdout_lines | map('quote') | join(' ') }}
+        responses:
+          '(?i)Enter passphrase for key': ''
+      changed_when: False
+
+    when: check_login_pubkey.rc != 0
+
+  delegate_to: localhost
+  become: False
+  become_user: >-
+    {{ ansible_version.full
+       | version_compare('2.0', '<')
+       | ternary(hostvars[inventory_hostname].ansible_ssh_user
+                 | d(ansible_ssh_user),
+                 hostvars[inventory_hostname].ansible_ssh_user
+                 | d(hostvars[inventory_hostname].ansible_user)
+                 | d(ansible_ssh_user)
+                 | d(ansible_user))
+       | d(lookup('id', 'euname'), True) }}
+  vars:
+  - ansible_become: False
+  - ansible_become_user: >-
+      {{ ansible_version.full
+         | version_compare('2.0', '<')
+         | ternary(hostvars[inventory_hostname].ansible_ssh_user
+                   | d(ansible_ssh_user),
+                   hostvars[inventory_hostname].ansible_ssh_user
+                   | d(hostvars[inventory_hostname].ansible_user)
+                   | d(ansible_ssh_user)
+                   | d(ansible_user))
+         | d(lookup('id', 'euname'), True) }}
