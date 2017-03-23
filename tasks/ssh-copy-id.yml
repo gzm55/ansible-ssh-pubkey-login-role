@@ -168,7 +168,6 @@
 
     when: check_login_pubkey.rc != 0
 
-  delegate_to: localhost
   become: False
   become_user: >-
     {{ ansible_version.full
