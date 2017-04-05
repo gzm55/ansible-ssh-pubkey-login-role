@@ -187,11 +187,13 @@
          or ssh_options.stdout_lines
             | select('match', '-[a-zA-Z0-9]*i')
             | list
-            | length > 0 }}
+            | length > 0
+      }}
   - ssh_prepend_args: >-
       {{ specify_ssh_private_key
          | ternary('-o IdentitiesOnly=yes -o KbdInteractiveAuthentication=no',
-                   '-o KbdInteractiveAuthentication=no') }}
+                   '-o KbdInteractiveAuthentication=no')
+      }}
       -o PreferredAuthentications=publickey
       -o PasswordAuthentication=no
       -o ControlPath=none
