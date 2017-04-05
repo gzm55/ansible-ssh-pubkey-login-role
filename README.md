@@ -12,6 +12,10 @@ Basic method is the same as ssh-copyid:
 If a managed host has a `ansible_connection` other than `ssh`, `paramiko` or `smart`,
 it will be skipped installing the public keys.
 
+NOTE: If we specify private keys by `--private-key` ansible option,
+the validating step will skip the keys from ssh agent,
+which may cause fail if the specified keys is of types not supported by the remote servers.
+
 Requirements
 ------------
 

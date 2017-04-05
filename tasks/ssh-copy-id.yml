@@ -42,11 +42,7 @@
     expect:
       command: >-
          {{ ansible_ssh_executable | quote }}
-         -o IdentitiesOnly=yes
-         -o KbdInteractiveAuthentication=no
-         -o PreferredAuthentications=publickey
-         -o PasswordAuthentication=no
-         -o ControlPath=none
+         {{ ssh_prepend_args }}
          {{ ssh_options.stdout_lines | map('quote') | join(' ') }}
       responses:
         '(?i)Enter passphrase for key': ''
@@ -59,13 +55,9 @@
       delegate_to: localhost
       register: debug_identity_files
       raw: >-
-           {{ ansible_ssh_executable | quote }} \
-           -v \
-           -o IdentitiesOnly=yes \
-           -o KbdInteractiveAuthentication=no \
-           -o PreferredAuthentications=publickey \
-           -o PasswordAuthentication=no \
-           -o ControlPath=none \
+           {{ ansible_ssh_executable | quote }}
+           -v
+           {{ ssh_prepend_args }}
            {{ ssh_options.stdout_lines | reject('match', '^-v+$') | map('quote') | join(' ') }} 2>&1
       failed_when: False
       changed_when: False
@@ -151,16 +143,12 @@
       - public_key_installed.stdout is defined
       - public_key_installed.stdout | search('Alread Installed') == False
 
-    - name: at least one passphrase-less key installed
+    - name: at least one valid passphrase-less key installed (key types may be rejected by servers)
       delegate_to: localhost
       expect:
         command: >
           {{ ansible_ssh_executable | quote }}
-          -o IdentitiesOnly=yes
-          -o KbdInteractiveAuthentication=no
-          -o PreferredAuthentications=publickey
-          -o PasswordAuthentication=no
-          -o ControlPath=none
+          {{ ssh_prepend_args }}
           {{ ssh_options.stdout_lines | map('quote') | join(' ') }}
         responses:
           '(?i)Enter passphrase for key': ''
@@ -191,3 +179,19 @@
                    | d(ansible_ssh_user)
                    | d(ansible_user))
          | d(lookup('id', 'euname'), True) }}
+  - specify_ssh_private_key: >-
+      {{ ssh_options.stdout_lines
+         | select('match', 'IdentityFile=.*')
+         | list
+         | length > 0
+         or ssh_options.stdout_lines
+            | select('match', '-[a-zA-Z0-9]*i')
+            | list
+            | length > 0 }}
+  - ssh_prepend_args: >-
+      {{ specify_ssh_private_key
+         | ternary('-o IdentitiesOnly=yes -o KbdInteractiveAuthentication=no',
+                   '-o KbdInteractiveAuthentication=no') }}
+      -o PreferredAuthentications=publickey
+      -o PasswordAuthentication=no
+      -o ControlPath=none
