@@ -3,9 +3,7 @@ os: linux
 dist: xenial
 
 language: python
-python:
-- 2.7
-- 3.5
+python: 3.5 # non-python roles, so do not test for eol pyton 2.7
 
 # Use the docker for testing
 services:
@@ -24,10 +22,7 @@ install:
   - which ssh-add
 
   # Install ansible
-  - pip install ansible ansible-lint
-
-  # patch ansible-lint issue 250
-  - sed -i '/^\s*_jinja = re\.compile([^),]*)/ s/)\s*$/, re.DOTALL)/' `python -c "import os, ansiblelint; print(os.path.dirname(os.path.abspath(ansiblelint.__file__))+'/rules/UsingBareVariablesIsDeprecatedRule.py')"`
+  - pip install ansible "ansible-lint>=4.2.0"
 
   # Check ansible version
   - ansible --version
@@ -85,7 +80,7 @@ script:
   - echo ========== [run 3rd round, with a uncrypted private key] ==========
   - ssh -O exit -o Port=4848 -o User=root -o ControlPath=/home/travis/.ansible/cp/ansible-ssh-%h-%p-%r -tt 127.0.0.1 || true
   - rm ~/.ssh/id_rsa ~/.ssh/id_rsa.pub && ssh-keygen -N '' -f ~/.ssh/id_rsa && rm ~/.ssh/id_rsa.pub
-  - true && ! ansible-playbook tests/test.yml -i tests/inventory
+  - true && ! ansible-playbook tests/test.yml -vvv -i tests/inventory
   - ansible-playbook tests/test.yml -i tests/inventory-pass
   - ansible-playbook tests/test.yml -i tests/inventory
 

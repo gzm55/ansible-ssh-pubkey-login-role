@@ -35,7 +35,37 @@
   failed_when: ssh_options.stderr
   changed_when: False
 
-- block:
+- name: main tasks
+  vars:
+  - ansible_become: False
+  - ansible_become_user: >-
+      {{ ( ansible_version.full is version('2.0', '<'))
+         | ternary(hostvars[inventory_hostname].ansible_ssh_user
+                   | d(ansible_ssh_user),
+                   hostvars[inventory_hostname].ansible_ssh_user
+                   | d(hostvars[inventory_hostname].ansible_user)
+                   | d(ansible_ssh_user)
+                   | d(ansible_user))
+         | d(lookup('id', 'euname'), True) }}
+  - specify_ssh_private_key: >-
+      {{ ssh_options.stdout_lines
+         | select('match', 'IdentityFile=.*')
+         | list
+         | length > 0
+         or ssh_options.stdout_lines
+            | select('match', '-[a-zA-Z0-9]*i')
+            | list
+            | length > 0
+      }}
+  - ssh_prepend_args: >-
+      {{ specify_ssh_private_key
+         | ternary('-o IdentitiesOnly=yes -o KbdInteractiveAuthentication=no',
+                   '-o KbdInteractiveAuthentication=no')
+      }}
+      -o PreferredAuthentications=publickey
+      -o PasswordAuthentication=no
+      -o ControlPath=none
+  block:
   - name: ssh private keys should be alread in agent or without passwords
     delegate_to: localhost
     register: check_login_pubkey
@@ -49,8 +79,9 @@
     failed_when: check_login_pubkey.stdout is not defined or check_login_pubkey.stdout is search('Enter passphrase for key')
     changed_when: False
 
-  - block:
-
+  - name: when login fail
+    when: check_login_pubkey.rc != 0
+    block:
     - name: list identity files
       delegate_to: localhost
       register: debug_identity_files
@@ -153,45 +184,3 @@
         responses:
           '(?i)Enter passphrase for key': ''
       changed_when: False
-
-    when: check_login_pubkey.rc != 0
-
-  become: False
-  become_user: >-
-    {{ ( ansible_version.full is version('2.0', '<'))
-       | ternary(hostvars[inventory_hostname].ansible_ssh_user
-                 | d(ansible_ssh_user),
-                 hostvars[inventory_hostname].ansible_ssh_user
-                 | d(hostvars[inventory_hostname].ansible_user)
-                 | d(ansible_ssh_user)
-                 | d(ansible_user))
-       | d(lookup('id', 'euname'), True) }}
-  vars:
-  - ansible_become: False
-  - ansible_become_user: >-
-      {{ ( ansible_version.full is version('2.0', '<'))
-         | ternary(hostvars[inventory_hostname].ansible_ssh_user
-                   | d(ansible_ssh_user),
-                   hostvars[inventory_hostname].ansible_ssh_user
-                   | d(hostvars[inventory_hostname].ansible_user)
-                   | d(ansible_ssh_user)
-                   | d(ansible_user))
-         | d(lookup('id', 'euname'), True) }}
-  - specify_ssh_private_key: >-
-      {{ ssh_options.stdout_lines
-         | select('match', 'IdentityFile=.*')
-         | list
-         | length > 0
-         or ssh_options.stdout_lines
-            | select('match', '-[a-zA-Z0-9]*i')
-            | list
-            | length > 0
-      }}
-  - ssh_prepend_args: >-
-      {{ specify_ssh_private_key
-         | ternary('-o IdentitiesOnly=yes -o KbdInteractiveAuthentication=no',
-                   '-o KbdInteractiveAuthentication=no')
-      }}
-      -o PreferredAuthentications=publickey
-      -o PasswordAuthentication=no
-      -o ControlPath=none
