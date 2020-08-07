@@ -80,7 +80,7 @@
                | intersect(['sh', 'csh', 'fish'])
                | list
                | length == 1
-               and ansible_version.full | version_compare('2.1', '>='))
+               and ansible_version.full is version('2.1', '>='))
              | ternary(ansible_shell_executable, '/bin/sh')
           }}
       - shell_type: >-
@@ -158,8 +158,7 @@
 
   become: False
   become_user: >-
-    {{ ansible_version.full
-       | version_compare('2.0', '<')
+    {{ ( ansible_version.full is version('2.0', '<'))
        | ternary(hostvars[inventory_hostname].ansible_ssh_user
                  | d(ansible_ssh_user),
                  hostvars[inventory_hostname].ansible_ssh_user
@@ -170,8 +169,7 @@
   vars:
   - ansible_become: False
   - ansible_become_user: >-
-      {{ ansible_version.full
-         | version_compare('2.0', '<')
+      {{ ( ansible_version.full is version('2.0', '<'))
          | ternary(hostvars[inventory_hostname].ansible_ssh_user
                    | d(ansible_ssh_user),
                    hostvars[inventory_hostname].ansible_ssh_user

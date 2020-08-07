@@ -4,8 +4,8 @@ galaxy_info:
 
   license: BSD
 
-  ## include_tasks require 2.4
-  min_ansible_version: 2.4
+  ## In 2.5 version_compare was renamed to version
+  min_ansible_version: 2.5
 
   platforms:
   - name: GenericBSD

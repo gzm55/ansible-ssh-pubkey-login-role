@@ -20,7 +20,7 @@ Requirements
 ------------
 
 On the control machine, Python Modules:
-* ansible>=2.2
+* ansible>=2.5
 * jinja2>=2.7
 * pexpect>=3.3
 
