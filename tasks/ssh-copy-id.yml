@@ -46,7 +46,7 @@
          {{ ssh_options.stdout_lines | map('quote') | join(' ') }}
       responses:
         '(?i)Enter passphrase for key': ''
-    failed_when: check_login_pubkey.stdout is not defined or check_login_pubkey.stdout | search('Enter passphrase for key')
+    failed_when: check_login_pubkey.stdout is not defined or check_login_pubkey.stdout is search('Enter passphrase for key')
     changed_when: False
 
   - block:
@@ -141,7 +141,7 @@
       - public_key_installed.rc is defined
       - public_key_installed.rc == 0
       - public_key_installed.stdout is defined
-      - not public_key_installed.stdout | search('Alread Installed')
+      - public_key_installed.stdout is not search('Alread Installed')
 
     - name: at least one valid passphrase-less key installed (key types may be rejected by servers)
       delegate_to: localhost
