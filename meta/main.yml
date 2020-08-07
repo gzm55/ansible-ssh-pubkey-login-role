@@ -29,8 +29,6 @@ dependencies:
 - role: gzm55.require_disabe_become
   version: 1.0.0
 - role: gzm55.local_id_plugin
-- role: gzm55.local_ansible_config
-  config_key: ssh_connection/ssh_executable
 
 - role: gzm55.require_local_command
   only_check: True
@@ -42,21 +40,8 @@ dependencies:
   - cat
   - >
     {{ ansible_play_hosts_all
-       | d(ansible_play_hosts)
        | map('extract', hostvars)
-       | selectattr('ansible_ssh_executable', 'defined')
        | map(attribute='ansible_ssh_executable')
-       | list
-       | union(( ansible_play_hosts_all
-                 | d(ansible_play_hosts)
-                 | map('extract', hostvars)
-                 | rejectattr('ansible_ssh_executable', 'defined')
-                 | list
-                 | length == 0 )
-               | ternary([],
-                         [lookup('env', 'ANSIBLE_SSH_EXECUTABLE')
-                          | d(local_ansible_config['ssh_connection/ssh_executable'], True)
-                          | d('ssh', True)]
-                 )
-         )
+       | map('default', lookup('config', 'ANSIBLE_SSH_EXECUTABLE'))
+       | unique
     }}

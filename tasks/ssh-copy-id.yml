@@ -8,6 +8,7 @@
   when:
   - ( [ groups.all
         | map('extract', hostvars, 'ansible_ssh_executable')
+        | select('defined')
         | unique
         | map('d', omit ) ]
     )
@@ -39,13 +40,9 @@
   vars:
   - ansible_become: False
   - ansible_become_user: >-
-      {{ ( ansible_version.full is version('2.0', '<'))
-         | ternary(hostvars[inventory_hostname].ansible_ssh_user
-                   | d(ansible_ssh_user),
-                   hostvars[inventory_hostname].ansible_ssh_user
-                   | d(hostvars[inventory_hostname].ansible_user)
-                   | d(ansible_ssh_user)
-                   | d(ansible_user))
+      {{ ansible_user
+         | d(ansible_ssh_user)
+         | d(lookup('config', 'DEFAULT_REMOTE_USER'))
          | d(lookup('id', 'euname'), True) }}
   - specify_ssh_private_key: >-
       {{ ssh_options.stdout_lines
@@ -110,8 +107,7 @@
           {{ ( [ansible_shell_type | d('sh')]
                | intersect(['sh', 'csh', 'fish'])
                | list
-               | length == 1
-               and ansible_version.full is version('2.1', '>='))
+               | length == 1)
              | ternary(ansible_shell_executable, '/bin/sh')
           }}
       - shell_type: >-
@@ -138,21 +134,19 @@
             {{ shell_or }} {{ shell_exit }} 1{{ shell_newline }}
           restorecon -F .ssh .ssh/authorized_keys{{ shell_newline }}
           exit 0
-      with_items: >-
-        {{  ( lookup('lines',
+      loop: >-
+        {{  ( query('lines',
                      (need_install and require_local_command['PATH='+lookup('env','PATH')|quote]['ssh-add'])
-                     | ternary('ssh-add -L || true', ''),
-                     wantlist=True)
+                     | ternary('ssh-add -L 2>/dev/null || true', ''))
               | reject('match', 'The agent has no identities.')
               | list
-            + lookup('lines',
+            + query('lines',
                      identity_pubkeys
                      | select('exists')
                      | map('quote')
                      | map('regex_replace', '^', 'cat ')
-                     | join(';'),
-                     wantlist=True)
-            + lookup('lines',
+                     | join(';'))
+            + query('lines',
                      (need_install and require_local_command['PATH='+lookup('env','PATH')|quote]['ssh-keygen'])
                      | ternary(identity_pubkeys
                                | reject('exists')
@@ -161,10 +155,8 @@
                                | map('regex_replace', '^', 'echo | DISPLAY=:0 SSH_ASKPASS={{ role_path | quote }}/fake.sh ssh-keygen -y -f ')
                                | map('regex_replace', '$', ' || true')
                                | join(';'),
-                               ''),
-                     wantlist=True)
+                               ''))
             )
-            | unique
             | difference([''])
         }}
       raw: "{{ shell_exec | quote }} -c {{ raw_script | quote }}"
