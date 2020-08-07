@@ -3,8 +3,6 @@
   gather_facts: False
   roles:
   - gzm55.reachable
-    version: 1.0.0
   - gzm55.local_ssh_known_hosts
-    version: 1.0.0
   - ansible-ssh-pubkey-login-role
   - ansible-ssh-pubkey-login-role
