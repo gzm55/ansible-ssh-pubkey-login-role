@@ -71,14 +71,14 @@ script:
   - true && ! ansible-playbook tests/test.yml -i tests/inventory-pass
 
   - echo ========== [run 2nd round, with a uncrypted key pair] ==========
-  - ssh -O exit -o Port=4848 -o User=root -o ControlPath=/home/travis/.ansible/cp/ansible-ssh-%h-%p-%r -tt 127.0.0.1 || true
+  - find /home/travis/.ansible/cp -maxdepth 1 -a ! -type d | xargs -rn 1 ssh -O exit -o Port=4848 -o User=root -o ControlPath={} -tt 127.0.0.1 || true
   - ssh-keygen -N '' -f ~/.ssh/id_rsa
   - true && ! ansible-playbook tests/test.yml -i tests/inventory
   - ansible-playbook tests/test.yml -i tests/inventory-pass
   - ansible-playbook tests/test.yml -i tests/inventory
 
   - echo ========== [run 3rd round, with a uncrypted private key] ==========
-  - ssh -O exit -o Port=4848 -o User=root -o ControlPath=/home/travis/.ansible/cp/ansible-ssh-%h-%p-%r -tt 127.0.0.1 || true
+  - find /home/travis/.ansible/cp -maxdepth 1 -a ! -type d | xargs -rn 1 ssh -O exit -o Port=4848 -o User=root -o ControlPath={} -tt 127.0.0.1 || true
   - rm ~/.ssh/id_rsa ~/.ssh/id_rsa.pub && ssh-keygen -N '' -f ~/.ssh/id_rsa && rm ~/.ssh/id_rsa.pub
   - true && ! ansible-playbook tests/test.yml -vvv -i tests/inventory
   - ansible-playbook tests/test.yml -i tests/inventory-pass
@@ -89,7 +89,7 @@ script:
   - ansible-playbook tests/test.yml -i tests/inventory
 
   - echo ========== [run 5th round, with a crypted key pair] ==========
-  - ssh -O exit -o Port=4848 -o User=root -o ControlPath=/home/travis/.ansible/cp/ansible-ssh-%h-%p-%r -tt 127.0.0.1 || true
+  - find /home/travis/.ansible/cp -maxdepth 1 -a ! -type d | xargs -rn 1 ssh -O exit -o Port=4848 -o User=root -o ControlPath={} -tt 127.0.0.1 || true
   - docker exec -i alpine-sshd sh -c 'rm ~/.ssh -rf' && ssh-keygen -p -P '' -N '123456' -f ~/.ssh/id_rsa
   - true && ! ansible-playbook tests/test.yml -i tests/inventory
   - true && ! ansible-playbook tests/test.yml -i tests/inventory-pass
@@ -100,7 +100,7 @@ script:
   - ansible-playbook tests/test.yml -i tests/inventory
 
   - echo ========== [run 7th round, with --become] ==========
-  - ssh -O exit -o Port=4848 -o User=root -o ControlPath=/home/travis/.ansible/cp/ansible-ssh-%h-%p-%r -tt 127.0.0.1 || true
+  - find /home/travis/.ansible/cp -maxdepth 1 -a ! -type d | xargs -rn 1 ssh -O exit -o Port=4848 -o User=root -o ControlPath={} -tt 127.0.0.1 || true
   - docker exec -i alpine-sshd sh -c 'rm ~/.ssh -rf'
   - eval `ssh-agent`
   - echo | DISPLAY=:0 SSH_ASKPASS="$PWD/ps.sh" ssh-add
@@ -108,7 +108,7 @@ script:
   - test "$(docker exec alpine-sshd sh -c 'cat $HOME/.ssh/authorized_keys' | cut -d ' ' -f 1,2 | uniq | md5sum)" = "$(cat ~/.ssh/id_rsa.pub | cut -d ' ' -f 1,2 | md5sum)"
 
   - echo ========== [run 8th round, shell type is fish] ==========
-  - ssh -O exit -o Port=4848 -o User=root -o ControlPath=/home/travis/.ansible/cp/ansible-ssh-%h-%p-%r -tt 127.0.0.1 || true
+  - find /home/travis/.ansible/cp -maxdepth 1 -a ! -type d | xargs -rn 1 ssh -O exit -o Port=4848 -o User=root -o ControlPath={} -tt 127.0.0.1 || true
   - docker exec -i alpine-sshd sh -c 'rm ~/.ssh -rf'
   - docker exec -i alpine-sshd sh -c 'apk update && apk add fish bc'
   - ansible-playbook tests/test.yml -i tests/inventory-fish
