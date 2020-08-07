@@ -2,8 +2,8 @@
 os: linux
 dist: xenial
 
+# non-python roles, so do not test for eol pyton 2.7
 language: python
-python: 3.5 # non-python roles, so do not test for eol pyton 2.7
 
 # Use the docker for testing
 services:
