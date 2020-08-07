@@ -80,7 +80,7 @@ script:
   - echo ========== [run 3rd round, with a uncrypted private key] ==========
   - find /home/travis/.ansible/cp -maxdepth 1 -a ! -type d | xargs -rn1 -I {} ssh -O exit -o Port=4848 -o User=root -o ControlPath={} -tt 127.0.0.1 || true
   - rm ~/.ssh/id_rsa ~/.ssh/id_rsa.pub && ssh-keygen -N '' -f ~/.ssh/id_rsa && rm ~/.ssh/id_rsa.pub
-  - true && ! ansible-playbook tests/test.yml -vvv -i tests/inventory
+  - true && ! ansible-playbook tests/test.yml -i tests/inventory
   - ansible-playbook tests/test.yml -i tests/inventory-pass
   - ansible-playbook tests/test.yml -i tests/inventory
 
