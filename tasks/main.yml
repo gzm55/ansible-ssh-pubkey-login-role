@@ -1,7 +1,6 @@
 ---
 - name: include ssh-copy-id tasks if needed
-  include: tasks/ssh-copy-id.yml
-  static: no
   when:
-  - ansible_pubkey_login_is_disabled == False
-  - ([ hostvars[inventory_hostname].ansible_connection | d('smart') ]) | intersect(['ssh', 'smart', 'paramiko']) | list | length == 1
+  - not ansible_pubkey_login_is_disabled
+  - ([ hostvars[inventory_hostname].ansible_connection | d('smart') ]) | intersect(['ssh', 'smart', 'paramiko']) | list
+  include_tasks: ssh-copy-id.yml
