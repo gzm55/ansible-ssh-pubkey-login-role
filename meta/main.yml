@@ -47,5 +47,6 @@ dependencies:
        | map('extract', hostvars)
        | map(attribute='ansible_ssh_executable')
        | map('default', lookup('config', 'ANSIBLE_SSH_EXECUTABLE'))
+       | list
        | union([])
     }}
