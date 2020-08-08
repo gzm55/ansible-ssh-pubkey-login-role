@@ -1,5 +1,5 @@
-ssh_pubkey_login
-================
+ssh_pubkey_login (1.0.0)
+========================
 
 Role for copying local ssh public keys to managed hosts.
 Only need ansible raw module on remote hosts to install new keys,
