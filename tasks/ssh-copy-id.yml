@@ -76,7 +76,7 @@
       register: debug_identity_files
       raw: >-
            {{ ansible_ssh_executable | quote }}
-           -v
+           -o LogLevel=DEBUG1
            {{ ssh_prepend_args }}
            {{ ssh_options.stdout_lines | reject('match', '^-v+$') | map('quote') | join(' ') }} 2>&1
       failed_when: False
