@@ -79,6 +79,7 @@
       failed_when: False
       changed_when: False
 
+    ## skip *_sk keys, fido2 keys require pressing the button on the fido keys
     - name: install public keys
       register: public_key_installed
       vars:
@@ -88,7 +89,7 @@
              | d([])
              | select('match', '^debug1: identity file .*$')
              | map('regex_replace', '^debug1: identity file |(-cert)? type [^ ]+$', '')
-             | reject('match', '^.*_sk$') ## skip *_sk keys, fido2 keys require pressing the button on the fido keys
+             | reject('match', '^.*_sk$')
              | unique
              | select('exists')
              | map('regex_replace', '$', '.pub')
