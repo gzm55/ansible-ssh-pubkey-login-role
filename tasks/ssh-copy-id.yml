@@ -62,7 +62,10 @@
          {{ ssh_options.stdout_lines | map('quote') | join(' ') }}
       responses:
         '(?i)Enter passphrase for': ''
-    failed_when: check_login_pubkey.stdout is not defined or check_login_pubkey.stdout is search('Enter passphrase for')
+    failed_when: >-
+      check_login_pubkey.stdout is not defined
+      or check_login_pubkey.stdout is search('Enter passphrase for')
+      or check_login_pubkey.stdout is not search('Permission denied .*publickey')
     changed_when: False
 
   - name: when login fail
