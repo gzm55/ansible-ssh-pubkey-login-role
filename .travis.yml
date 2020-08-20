@@ -75,7 +75,7 @@ script:
   - ssh-keygen -N '' -f ~/.ssh/id_rsa
   - true && ! ansible-playbook tests/test.yml -i tests/inventory
   - ansible-playbook tests/test.yml -i tests/inventory-pass
-  - ansible-playbook tests/test.yml -i tests/inventory
+  - ansible-playbook tests/test.yml -vvvv -i tests/inventory
 
   - echo ========== [run 3rd round, with a uncrypted private key] ==========
   - find /home/travis/.ansible/cp -maxdepth 1 -a ! -type d | xargs -rn1 -I {} ssh -O exit -o Port=4848 -o User=root -o ControlPath={} -tt 127.0.0.1 || true
