@@ -65,7 +65,7 @@
     failed_when: >-
       check_login_pubkey.stdout is not defined
       or check_login_pubkey.stdout is search('Enter passphrase for')
-      or check_login_pubkey.stdout is not search('Permission denied .*publickey')
+      or (check_login_pubkey is failed and check_login_pubkey.stdout is not search('Permission denied .*publickey'))
     changed_when: False
 
   - name: when login fail
