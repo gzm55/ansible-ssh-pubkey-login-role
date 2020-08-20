@@ -5,30 +5,21 @@
 
 - name: override ssh ansible_ssh_executable
   run_once: True
-  when:
-  - ( [ groups.all
-        | map('extract', hostvars, 'ansible_ssh_executable')
-        | select('defined')
-        | unique
-        | map('d', omit ) ]
-    )
-    | difference([[omit]])
-    | first
-    | d([])
-    | list
-    | length == 1
+  when: inventory_hostname == ansible_play_hosts_all[0]
   connection: ssh
   vars:
   - ansible_connection: ssh
   - ansible_ssh_executable: "{{ omit }}"
   assert:
     that:
-    - "[ansible_connection] | intersect(['ssh', 'smart']) | list | length == 1"
+    - "ansible_connection == 'ssh'"
     - "ansible_ssh_executable == omit"
 
 - name: get ssh options
   register: ssh_options
   connection: ssh
+  vars:
+  - ansible_become: False
   raw: exit
   vars:
   - ansible_connection: ssh
@@ -48,11 +39,9 @@
       {{ ssh_options.stdout_lines
          | select('match', 'IdentityFile=.*')
          | list
-         | length > 0
          or ssh_options.stdout_lines
             | select('match', '-[a-zA-Z0-9]*i')
             | list
-            | length > 0
       }}
   - ssh_prepend_args: >-
       {{ specify_ssh_private_key
@@ -61,6 +50,7 @@
       }}
       -o PreferredAuthentications=publickey
       -o PasswordAuthentication=no
+      -o ChallengeResponseAuthentication=no
       -o ControlPath=none
   block:
   - name: ssh private keys should be alread in agent or without passwords
@@ -72,8 +62,8 @@
          {{ ssh_prepend_args }}
          {{ ssh_options.stdout_lines | map('quote') | join(' ') }}
       responses:
-        '(?i)Enter passphrase for key': ''
-    failed_when: check_login_pubkey.stdout is not defined or check_login_pubkey.stdout is search('Enter passphrase for key')
+        '(?i)Enter passphrase for': ''
+    failed_when: check_login_pubkey.stdout is not defined or check_login_pubkey.stdout is search('Enter passphrase for')
     changed_when: False
 
   - name: when login fail
@@ -99,15 +89,13 @@
              | d([])
              | select('match', '^debug1: identity file .*$')
              | map('regex_replace', '^debug1: identity file |(-cert)? type [^ ]+$', '')
+             | reject('match', '^.*_sk$') ## skip *_sk keys, fido2 keys require pressing the button on the fido keys
              | unique
              | select('exists')
              | map('regex_replace', '$', '.pub')
              | list }}
       - shell_exec: >-
-          {{ ( [ansible_shell_type | d('sh')]
-               | intersect(['sh', 'csh', 'fish'])
-               | list
-               | length == 1)
+          {{ (ansible_shell_type | d('sh') in ['sh', 'csh', 'fish'])
              | ternary(ansible_shell_executable, '/bin/sh')
           }}
       - shell_type: >-
@@ -168,11 +156,9 @@
 
     - name: at least one valid passphrase-less key installed (key types may be rejected by servers)
       delegate_to: localhost
-      expect:
-        command: >
-          {{ ansible_ssh_executable | quote }}
-          {{ ssh_prepend_args }}
-          {{ ssh_options.stdout_lines | map('quote') | join(' ') }}
-        responses:
-          '(?i)Enter passphrase for key': ''
       changed_when: False
+      raw: >
+        {{ ansible_ssh_executable | quote }}
+        -o BatchMode=yes
+        {{ ssh_prepend_args }}
+        {{ ssh_options.stdout_lines | map('quote') | join(' ') }}

@@ -28,7 +28,7 @@ dependencies:
 - role: gzm55.require_implicity_localhost
   version: master
 - role: gzm55.require_disabe_become
-  version: 1.0.0
+  version: 1.0.1
 - role: gzm55.local_id_plugin
   version: master
 
@@ -40,13 +40,4 @@ dependencies:
 - role: gzm55.require_local_command
   version: master
   only_check: False
-  command:
-  - cat
-  - >
-    {{ ansible_play_hosts_all
-       | map('extract', hostvars)
-       | map(attribute='ansible_ssh_executable')
-       | map('default', lookup('config', 'ANSIBLE_SSH_EXECUTABLE'))
-       | list
-       | union([])
-    }}
+  command: cat # dump pubkey
