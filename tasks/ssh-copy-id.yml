@@ -18,10 +18,9 @@
 - name: get ssh options
   register: ssh_options
   connection: ssh
-  vars:
-  - ansible_become: False
   raw: exit
   vars:
+  - ansible_become: False
   - ansible_connection: ssh
   - ansible_ssh_executable: "{{ role_path }}/files/dump-ssh-opts.sh"
   failed_when: ssh_options.stderr
