@@ -52,34 +52,34 @@
       -o ChallengeResponseAuthentication=no
       -o ControlPath=none
   block:
-  - name: ssh private keys should be alread in agent or without passwords
+  - name: try login in batch mode via public key authentication
     delegate_to: localhost
     register: check_login_pubkey
-    expect:
-      command: >-
+    raw: >-
          {{ ansible_ssh_executable | quote }}
+         -o BatchMode=yes
          {{ ssh_prepend_args }}
          {{ ssh_options.stdout_lines | map('quote') | join(' ') }}
-      responses:
-        '(?i)Enter passphrase for': ''
-    failed_when: >-
-      check_login_pubkey.stdout is not defined
-      or check_login_pubkey.stdout is search('Enter passphrase for')
-      or (check_login_pubkey is failed and check_login_pubkey.stdout is not search('Permission denied .*publickey'))
+    failed_when:
+    - check_login_pubkey is failed
+    - check_login_pubkey.stdout | d('') is not search('Permission denied .*publickey')
     changed_when: False
 
   - name: when login fail
     when: check_login_pubkey.rc != 0
     block:
-    - name: list identity files
+    - name: list identity files, given private keys alread in agent or without passwords
       delegate_to: localhost
       register: debug_identity_files
-      raw: >-
+      expect:
+        command: >-
            {{ ansible_ssh_executable | quote }}
            -o LogLevel=DEBUG1
            {{ ssh_prepend_args }}
            {{ ssh_options.stdout_lines | reject('match', '^-v+$') | map('quote') | join(' ') }} 2>&1
-      failed_when: False
+         responses:
+           '(?i)Enter passphrase for': ''
+      failed_when: check_login_pubkey.stdout is not defined or check_login_pubkey.stdout is search('Enter passphrase for')
       changed_when: False
 
     ## skip *_sk keys, fido2 keys require pressing the button on the fido keys
