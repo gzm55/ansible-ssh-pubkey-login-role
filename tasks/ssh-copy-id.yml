@@ -77,8 +77,8 @@
            -o LogLevel=DEBUG1
            {{ ssh_prepend_args }}
            {{ ssh_options.stdout_lines | reject('match', '^-v+$') | map('quote') | join(' ') }} 2>&1
-         responses:
-           '(?i)Enter passphrase for': ''
+        responses:
+          '(?i)Enter passphrase for': ''
       failed_when: check_login_pubkey.stdout is not defined or check_login_pubkey.stdout is search('Enter passphrase for')
       changed_when: False
 
