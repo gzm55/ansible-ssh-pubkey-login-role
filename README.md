@@ -1,4 +1,4 @@
-ssh_pubkey_login (1.0.2)
+ssh_pubkey_login (1.0.3-dev)
 ============================
 
 Role for copying local ssh public keys to managed hosts.
