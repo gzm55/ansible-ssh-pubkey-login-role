@@ -59,7 +59,7 @@
          {{ ansible_ssh_executable | quote }}
          -o BatchMode=yes
          {{ ssh_prepend_args }}
-         {{ ssh_options.stdout_lines | map('quote') | join(' ') }}
+         {{ ssh_options.stdout_lines | map('quote') | join(' ') }} 2>&1
     failed_when:
     - check_login_pubkey is failed
     - check_login_pubkey.stdout | d('') is not search('Permission denied .*publickey')
