@@ -53,6 +53,7 @@ jobs:
         # - enable root login
         # - root login via pubkey
         docker run -p 5848:22 --name centos-sshd --hostname centos-sshd -d centos:7 sh -xc 'yum --assumeyes install openssh-server tcsh && echo "PermitRootLogin yes" >> /etc/ssh/sshd_config && ssh-keygen -f /etc/ssh/ssh_host_rsa_key -N "" -t rsa && ssh-keygen -f /etc/ssh/ssh_host_dsa_key -N "" -t dsa && mkdir -p /var/run/sshd && exec /usr/sbin/sshd -D'
+        ssh-keygen -N '' -f ~/.ssh/id_rsa
         docker exec -i centos-sshd sh -xc 'cd; umask 077; mkdir -p .ssh; tee -a .ssh/authorized_keys' < ~/.ssh/id_rsa.pub
         ssh-keygen -f ~/.ssh/known_hosts -R [localhost]:5848 || true
         printf "123456\n123456" | docker exec -i centos-sshd passwd
