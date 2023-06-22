@@ -112,7 +112,7 @@
                          {% raw -%}\{%- endraw %}
         shell_and:       "{{ (shell_type == 'fish') | ternary('; and', '&&') }}"
         shell_or:        "{{ (shell_type == 'fish') | ternary('; or', '||') }}"
-        shell_exit:      "{{ (shell_type == 'csh') | ternary('eval exit', 'exit'      ) }}"
+        shell_exit:      "{{ (shell_type == 'csh') | ternary('eval exit', 'exit') }}"
         shell_newline:   "{{ (shell_type == 'csh') | ternary(';' + shell_backslash, '') }}"
         raw_script: |-
           cd
