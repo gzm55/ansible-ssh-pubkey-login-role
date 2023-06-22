@@ -3,4 +3,4 @@
   when:
   - not ansible_pubkey_login_is_disabled
   - (hostvars[inventory_hostname].ansible_connection | d('smart')) in ['ssh', 'smart', 'paramiko']
-  include_tasks: ssh-copy-id.yml
+  ansible.builtin.include_tasks: ssh-copy-id.yml

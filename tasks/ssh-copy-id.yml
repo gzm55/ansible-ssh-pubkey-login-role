@@ -10,7 +10,7 @@
   vars:
     ansible_connection: ssh
     ansible_ssh_executable: "{{ omit }}"
-  assert:
+  ansible.builtin.assert:
     that:
     - "ansible_connection == 'ssh'"
     - "ansible_ssh_executable == omit"
@@ -18,7 +18,7 @@
 - name: Get ssh options
   register: ssh_options
   connection: ssh
-  raw: exit
+  ansible.builtin.raw: exit
   vars:
     ansible_become: False
     ansible_connection: ssh
@@ -55,7 +55,7 @@
   - name: Try login in batch mode via public key authentication
     delegate_to: localhost
     register: check_login_pubkey
-    raw: >-
+    ansible.builtin.raw: >-
          {{ ansible_ssh_executable | quote }}
          -o BatchMode=yes
          {{ ssh_prepend_args }}
@@ -71,7 +71,7 @@
     - name: List identity files, given private keys alread in agent or without passwords
       delegate_to: localhost
       register: debug_identity_files
-      expect:
+      ansible.builtin.expect:
         command: >-
            {{ ansible_ssh_executable | quote }}
            -o LogLevel=DEBUG1
@@ -110,10 +110,10 @@
           }}
         shell_backslash: >-
                          {% raw -%}\{%- endraw %}
-        shell_and:       "{{ (shell_type == 'fish') | ternary('; and',     '&&'        ) }}"
-        shell_or:        "{{ (shell_type == 'fish') | ternary('; or',      '||'        ) }}"
-        shell_exit:      "{{ (shell_type == 'csh')  | ternary('eval exit', 'exit'      ) }}"
-        shell_newline:   "{{ (shell_type == 'csh')  | ternary(';' + shell_backslash, '') }}"
+        shell_and:       "{{ (shell_type == 'fish') | ternary('; and', '&&') }}"
+        shell_or:        "{{ (shell_type == 'fish') | ternary('; or', '||') }}"
+        shell_exit:      "{{ (shell_type == 'csh') | ternary('eval exit', 'exit'      ) }}"
+        shell_newline:   "{{ (shell_type == 'csh') | ternary(';' + shell_backslash, '') }}"
         raw_script: |-
           cd
           umask 077
@@ -150,7 +150,7 @@
             )
             | difference([''])
         }}
-      raw: "{{ shell_exec | quote }} -c {{ raw_script | quote }}"
+      ansible.builtin.raw: "{{ shell_exec | quote }} -c {{ raw_script | quote }}"
       changed_when:
       - public_key_installed.rc is defined
       - public_key_installed.rc == 0
@@ -160,7 +160,7 @@
     - name: At least one valid passphrase-less key installed (key types may be rejected by servers)
       delegate_to: localhost
       changed_when: False
-      raw: >
+      ansible.builtin.raw: >
         {{ ansible_ssh_executable | quote }}
         -o BatchMode=yes
         {{ ssh_prepend_args }}

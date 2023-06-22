@@ -6,7 +6,8 @@ galaxy_info:
 
   license: BSD
 
-  ## In 2.5 version_compare was renamed to version
+  # In 2.5 version_compare was renamed to version
+  # ansible.builtin requires 2.8
   min_ansible_version: "2.8"
 
   platforms:
