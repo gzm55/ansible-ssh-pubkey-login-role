@@ -1,5 +1,5 @@
 ---
-- name: include ssh-copy-id tasks if needed
+- name: Include ssh-copy-id tasks if needed
   when:
   - not ansible_pubkey_login_is_disabled
   - (hostvars[inventory_hostname].ansible_connection | d('smart')) in ['ssh', 'smart', 'paramiko']

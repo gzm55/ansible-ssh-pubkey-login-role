@@ -3,38 +3,38 @@
 #   - Try ssh login only by pubkey
 #   - If login fail, copy all known public keys to the hosts via raw module
 
-- name: override ssh ansible_ssh_executable
+- name: Override ssh ansible_ssh_executable
   run_once: True
   when: inventory_hostname == ansible_play_hosts_all[0]
   connection: ssh
   vars:
-  - ansible_connection: ssh
-  - ansible_ssh_executable: "{{ omit }}"
+    ansible_connection: ssh
+    ansible_ssh_executable: "{{ omit }}"
   assert:
     that:
     - "ansible_connection == 'ssh'"
     - "ansible_ssh_executable == omit"
 
-- name: get ssh options
+- name: Get ssh options
   register: ssh_options
   connection: ssh
   raw: exit
   vars:
-  - ansible_become: False
-  - ansible_connection: ssh
-  - ansible_ssh_executable: "{{ role_path }}/files/dump-ssh-opts.sh"
+    ansible_become: False
+    ansible_connection: ssh
+    ansible_ssh_executable: "{{ role_path }}/files/dump-ssh-opts.sh"
   failed_when: ssh_options.stderr
   changed_when: False
 
-- name: main tasks
+- name: Main tasks
   vars:
-  - ansible_become: False
-  - ansible_become_user: >-
+    ansible_become: False
+    ansible_become_user: >-
       {{ ansible_user
          | d(ansible_ssh_user)
          | d(lookup('config', 'DEFAULT_REMOTE_USER'))
          | d(lookup('id', 'euname'), True) }}
-  - specify_ssh_private_key: >-
+    specify_ssh_private_key: >-
       {{ ssh_options.stdout_lines
          | select('match', 'IdentityFile=.*')
          | list
@@ -42,7 +42,7 @@
             | select('match', '-[a-zA-Z0-9]*i')
             | list
       }}
-  - ssh_prepend_args: >-
+    ssh_prepend_args: >-
       {{ specify_ssh_private_key
          | ternary('-o IdentitiesOnly=yes -o KbdInteractiveAuthentication=no',
                    '-o KbdInteractiveAuthentication=no')
@@ -52,7 +52,7 @@
       -o ChallengeResponseAuthentication=no
       -o ControlPath=none
   block:
-  - name: try login in batch mode via public key authentication
+  - name: Try login in batch mode via public key authentication
     delegate_to: localhost
     register: check_login_pubkey
     raw: >-
@@ -65,10 +65,10 @@
     - check_login_pubkey.stdout | d('') is not search('Permission denied .*publickey')
     changed_when: False
 
-  - name: when login fail
+  - name: When login fail
     when: check_login_pubkey.rc != 0
     block:
-    - name: list identity files, given private keys alread in agent or without passwords
+    - name: List identity files, given private keys alread in agent or without passwords
       delegate_to: localhost
       register: debug_identity_files
       expect:
@@ -83,11 +83,11 @@
       changed_when: False
 
     ## skip *_sk keys, fido2 keys require pressing the button on the fido keys
-    - name: install public keys
+    - name: Install public keys
       register: public_key_installed
       vars:
-      - need_install: "{{ debug_identity_files.stdout_lines is defined }}"
-      - identity_pubkeys: >-
+        need_install: "{{ debug_identity_files.stdout_lines is defined }}"
+        identity_pubkeys: >-
           {{ debug_identity_files.stdout_lines
              | d([])
              | select('match', '^debug1: identity file .*$')
@@ -97,24 +97,24 @@
              | select('exists')
              | map('regex_replace', '$', '.pub')
              | list }}
-      - shell_exec: >-
+        shell_exec: >-
           {{ (ansible_shell_type | d('sh') in ['sh', 'csh', 'fish'])
              | ternary(ansible_shell_executable, '/bin/sh')
           }}
-      - shell_type: >-
+        shell_type: >-
           {{ ( [ansible_shell_type | d('')]
                | intersect(['sh', 'csh', 'fish'])
                | list
                | length == 1 )
              | ternary(ansible_shell_type, 'sh')
           }}
-      - shell_backslash: >-
+        shell_backslash: >-
                          {% raw -%}\{%- endraw %}
-      - shell_and:       "{{ (shell_type == 'fish') | ternary('; and',     '&&'        ) }}"
-      - shell_or:        "{{ (shell_type == 'fish') | ternary('; or',      '||'        ) }}"
-      - shell_exit:      "{{ (shell_type == 'csh')  | ternary('eval exit', 'exit'      ) }}"
-      - shell_newline:   "{{ (shell_type == 'csh')  | ternary(';' + shell_backslash, '') }}"
-      - raw_script: |-
+        shell_and:       "{{ (shell_type == 'fish') | ternary('; and',     '&&'        ) }}"
+        shell_or:        "{{ (shell_type == 'fish') | ternary('; or',      '||'        ) }}"
+        shell_exit:      "{{ (shell_type == 'csh')  | ternary('eval exit', 'exit'      ) }}"
+        shell_newline:   "{{ (shell_type == 'csh')  | ternary(';' + shell_backslash, '') }}"
+        raw_script: |-
           cd
           umask 077
           mkdir -p .ssh
@@ -157,7 +157,7 @@
       - public_key_installed.stdout is defined
       - public_key_installed.stdout is not search('Alread Installed')
 
-    - name: at least one valid passphrase-less key installed (key types may be rejected by servers)
+    - name: At least one valid passphrase-less key installed (key types may be rejected by servers)
       delegate_to: localhost
       changed_when: False
       raw: >

@@ -1,5 +1,6 @@
 ---
-- hosts: all
+- name: Test this role
+  hosts: all
   gather_facts: False
   roles:
   - gzm55.reachable
