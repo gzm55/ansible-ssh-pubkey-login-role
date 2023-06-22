@@ -62,11 +62,75 @@ jobs:
         printf '#!/bin/sh\necho 123456\n' >ps.sh
         chmod +x ps.sh
 
-    - name: TEST - no key
+    - name: TEST 1 - no key
       run: |
         set -x
         true && ! ansible-playbook tests/test.yml -i tests/inventory
         true && ! ansible-playbook tests/test.yml -i tests/inventory-pass
+
+    - name: TEST 2 - with a uncrypted key pair
+      run: |
+        set -x
+        find /home/travis/.ansible/cp -maxdepth 1 -a ! -type d | xargs -rn1 -I {} ssh -O exit -o Port=4848 -o User=root -o ControlPath={} -tt 127.0.0.1 || true
+        ssh-keygen -N '' -f ~/.ssh/id_rsa
+        true && ! ansible-playbook tests/test.yml -i tests/inventory
+        ansible-playbook tests/test.yml -i tests/inventory-pass
+        ansible-playbook tests/test.yml -i tests/inventory
+
+    - name: TEST 3 - with a uncrypted private key
+      run: |
+        set -x
+        find /home/travis/.ansible/cp -maxdepth 1 -a ! -type d | xargs -rn1 -I {} ssh -O exit -o Port=4848 -o User=root -o ControlPath={} -tt 127.0.0.1 || true
+        rm ~/.ssh/id_rsa ~/.ssh/id_rsa.pub && ssh-keygen -N '' -f ~/.ssh/id_rsa && rm ~/.ssh/id_rsa.pub
+        true && ! ansible-playbook tests/test.yml -i tests/inventory
+        ansible-playbook tests/test.yml -i tests/inventory-pass
+        ansible-playbook tests/test.yml -i tests/inventory
+
+    - name: TEST 4 - install keys via control persist path
+      run: |
+        set -x
+        rm ~/.ssh/id_rsa && ssh-keygen -N '' -f ~/.ssh/id_rsa
+        ansible-playbook tests/test.yml -i tests/inventory
+
+    - name: TEST 5 - with a crypted key pair
+      run: |
+        set -x
+        find /home/travis/.ansible/cp -maxdepth 1 -a ! -type d | xargs -rn1 -I {} ssh -O exit -o Port=4848 -o User=root -o ControlPath={} -tt 127.0.0.1 || true
+        docker exec -i alpine-sshd sh -c 'rm ~/.ssh -rf' && ssh-keygen -p -P '' -N '123456' -f ~/.ssh/id_rsa
+        true && ! ansible-playbook tests/test.yml -i tests/inventory
+        true && ! ansible-playbook tests/test.yml -i tests/inventory-pass
+
+    - name: TEST 6 - with a crypted key pair in ssh-agent
+      run: |
+        set -x
+        eval `ssh-agent`
+        echo | DISPLAY=:0 SSH_ASKPASS="$PWD/ps.sh" ssh-add
+        ansible-playbook tests/test.yml -i tests/inventory
+
+    - name: TEST 7 - with --become
+      run: |
+        set -x
+        find /home/travis/.ansible/cp -maxdepth 1 -a ! -type d | xargs -rn1 -I {} ssh -O exit -o Port=4848 -o User=root -o ControlPath={} -tt 127.0.0.1 || true
+        docker exec -i alpine-sshd sh -c 'rm ~/.ssh -rf'
+        eval `ssh-agent`
+        echo | DISPLAY=:0 SSH_ASKPASS="$PWD/ps.sh" ssh-add
+        ansible-playbook tests/test.yml -i tests/inventory-pass --become
+        test "$(docker exec alpine-sshd sh -c 'cat $HOME/.ssh/authorized_keys' | cut -d ' ' -f 1,2 | uniq | md5sum)" = "$(cat ~/.ssh/id_rsa.pub | cut -d ' ' -f 1,2 | md5sum)"
+
+    - name: TEST 8 - shell type is fish
+      run: |
+        set -x
+        find /home/travis/.ansible/cp -maxdepth 1 -a ! -type d | xargs -rn1 -I {} ssh -O exit -o Port=4848 -o User=root -o ControlPath={} -tt 127.0.0.1 || true
+        docker exec -i alpine-sshd sh -c 'rm ~/.ssh -rf'
+        docker exec -i alpine-sshd sh -c 'apk update && apk add fish bc'
+        ansible-playbook tests/test.yml -i tests/inventory-fish
+        test "$(docker exec alpine-sshd sh -c 'cat $HOME/.ssh/authorized_keys' | cut -d ' ' -f 1,2 | uniq | md5sum)" = "$(cat ~/.ssh/id_rsa.pub | cut -d ' ' -f 1,2 | md5sum)"
+
+    - name: TEST 9 - centos with csh shell
+      run: |
+        set -x
+        ansible-playbook tests/test.yml -i tests/inventory-csh
+        test "$(docker exec centos-sshd sh -c 'cat $HOME/.ssh/authorized_keys' | cut -d ' ' -f 1,2 | uniq | md5sum)" = "$(cat ~/.ssh/id_rsa.pub | cut -d ' ' -f 1,2 | md5sum)"
 
   lint-job:
     name: lint codes
