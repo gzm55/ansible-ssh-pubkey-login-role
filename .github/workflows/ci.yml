@@ -1,0 +1,81 @@
+---
+name: ci workflow
+"on": push
+
+env:
+  ANSIBLE_ROLES_PATH: "..:tests/roles"
+
+jobs:
+  test-job:
+    name: test the role
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: print versions
+      run: |
+        set -x
+        uname -a
+        id
+        python3 --version
+        pip3 --version
+        ansible --version
+        docker version
+
+    - name: prepare tests
+      run: |
+        set -x
+        sudo apt install sshpass
+        sshpass -V
+        pip3 install -r requirements.txt
+        ansible-galaxy install -p tests/roles -r requirements.yml
+        ansible-galaxy install -p tests/roles -r requirements-test.yml
+
+    - name: syntax check
+      run: ansible-playbook tests/test.yml -i tests/inventory --syntax-check
+
+    - name: prepare sshd containers
+      run: |
+        set -x
+        docker pull hermsi/alpine-sshd
+        docker pull centos:7
+
+        # Start a sshd container for testing
+        # - listen on localhost:4848
+        # - enable root login
+        # - set root password to 123456
+        docker run -p 4848:22 --name alpine-sshd --hostname alpine-sshd -d -e ROOT_KEYPAIR_LOGIN_ENABLED=true -e ROOT_PASSWORD=123456 hermsi/alpine-sshd
+        docker exec -i alpine-sshd sh -c 'apk update'
+        ssh-keygen -f ~/.ssh/known_hosts -R [localhost]:4848 || true
+        sleep 2
+
+    - name: TEST - overriding detecting
+      run: |
+        echo TODO
+        false
+
+  lint-job:
+    name: lint codes
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v3
+    - name: prepare lint
+      run: |
+        pip3 install -r requirements.txt
+        pip3 install ansible-lint
+        ansible-lint --version
+    - name: lint
+      run: ansible-lint --show-relpath
+
+  deploy-job:
+    name: deploy the role on tag
+    runs-on: ubuntu-22.04
+    needs: [test-job, lint-job]
+    if: github.ref_type == 'tag'
+    steps:
+    - uses: actions/checkout@v3
+    - name: publish the role to Galaxy
+      uses: robertdebock/galaxy-action@1.2.1
+      with:
+        galaxy_api_key: ${{ secrets.GALAXY_API_KEY }}
+        git_branch: ${{ github.ref_name }}

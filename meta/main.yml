@@ -1,25 +1,23 @@
 galaxy_info:
+  role_name: ssh_pubkey_login
+  namespace: gzm55
   author: James Z.M. Gao
   description: Role for copying local ssh public keys to managed hosts.
 
   license: BSD
 
   ## In 2.5 version_compare was renamed to version
-  min_ansible_version: 2.5
+  min_ansible_version: 2.8
 
   platforms:
   - name: GenericBSD
-    versions:
-    - any
+    versions: [all]
   - name: GenericLinux
-    versions:
-    - any
+    versions: [all]
   - name: Windows
-    versions:
-    - all
+    versions: [all]
   - name: GenericUNIX
-    versions:
-    - any
+    versions: [all]
 
   galaxy_tags: [system, networking]
 
@@ -28,16 +26,16 @@ dependencies:
 - role: gzm55.require_implicity_localhost
   version: master
 - role: gzm55.require_disabe_become
-  version: 1.0.1
+  version: 2.0.0
 - role: gzm55.local_id_plugin
   version: master
 
 - role: gzm55.require_local_command
-  version: master
+  version: 1.0.0
   only_check: True
   command: [ ssh-add, ssh-keygen ]
 
 - role: gzm55.require_local_command
-  version: master
+  version: 1.0.0
   only_check: False
   command: cat # dump pubkey

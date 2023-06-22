@@ -7,7 +7,7 @@ language: python
 
 # Use the docker for testing
 services:
-  - docker
+- docker
 
 # Install ansible
 addons:
@@ -17,106 +17,106 @@ addons:
     - sshpass
 
 install:
-  - which ssh-keygen
-  - which ssh-agent
-  - which ssh-add
+- which ssh-keygen
+- which ssh-agent
+- which ssh-add
 
-  # Install ansible
-  - pip install ansible "ansible-lint>=4.2.0"
+# Install ansible
+- pip install ansible "ansible-lint>=4.2.0"
 
-  # Check ansible version
-  - ansible --version
+# Check ansible version
+- ansible --version
 
-  # Install python module and role dependencies
-  - test -f requirements.txt && pip install -r requirements.txt
-  - test -f requirements.yml && ansible-galaxy install -p tests/roles -r requirements.yml
-  - test -f requirements-test.yml && ansible-galaxy install -p tests/roles -r requirements-test.yml
+# Install python module and role dependencies
+- test -f requirements.txt && pip install -r requirements.txt
+- test -f requirements.yml && ansible-galaxy install -p tests/roles -r requirements.yml
+- test -f requirements-test.yml && ansible-galaxy install -p tests/roles -r requirements-test.yml
 
-  # Start a sshd container for testing at localhost:4848, enable root login, password is 123456
-  - docker pull danielguerra/alpine-sshd
-  - docker rm alpine-sshd || true
-  - docker run -p 4848:22 --name alpine-sshd --hostname alpine-sshd -d danielguerra/alpine-sshd sh -c 'echo "PermitRootLogin yes" >> /etc/ssh/sshd_config && exec /usr/sbin/sshd -D'
-  - ssh-keygen -f "~/.ssh/known_hosts" -R [localhost]:4848 || true
-  - echo -e "123456\n123456" | docker exec -i alpine-sshd passwd
+# Start a sshd container for testing at localhost:4848, enable root login, password is 123456
+- docker pull danielguerra/alpine-sshd
+- docker rm alpine-sshd || true
+- docker run -p 4848:22 --name alpine-sshd --hostname alpine-sshd -d danielguerra/alpine-sshd sh -c 'echo "PermitRootLogin yes" >> /etc/ssh/sshd_config && exec /usr/sbin/sshd -D'
+- ssh-keygen -f "~/.ssh/known_hosts" -R [localhost]:4848 || true
+- echo -e "123456\n123456" | docker exec -i alpine-sshd passwd
 
-  # Start a centos 7 sshd container for testing
-  # - listen on localhost:5848
-  # - enable root login
-  # - root login via pubkey
-  - docker pull centos:7
-  - docker rm -f centos-sshd || true
-  - docker run -p 5848:22 --name centos-sshd --hostname centos-sshd -d centos:7 sh -c 'yum --assumeyes install openssh-server tcsh && echo "PermitRootLogin yes" >> /etc/ssh/sshd_config && ssh-keygen -f /etc/ssh/ssh_host_rsa_key -N "" -t rsa && ssh-keygen -f /etc/ssh/ssh_host_dsa_key -N "" -t dsa && mkdir -p /var/run/sshd && exec /usr/sbin/sshd -D'
-  - cat ~/.ssh/id_rsa.pub | docker exec -i centos-sshd sh -c 'cd; umask 077; mkdir -p .ssh; tee -a .ssh/authorized_keys'
-  - ssh-keygen -f ~/.ssh/known_hosts -R [localhost]:5848 || true
-  - echo -e "123456\n123456" | docker exec -i centos-sshd passwd
+# Start a centos 7 sshd container for testing
+# - listen on localhost:5848
+# - enable root login
+# - root login via pubkey
+- docker pull centos:7
+- docker rm -f centos-sshd || true
+- docker run -p 5848:22 --name centos-sshd --hostname centos-sshd -d centos:7 sh -c 'yum --assumeyes install openssh-server tcsh && echo "PermitRootLogin yes" >> /etc/ssh/sshd_config && ssh-keygen -f /etc/ssh/ssh_host_rsa_key -N "" -t rsa && ssh-keygen -f /etc/ssh/ssh_host_dsa_key -N "" -t dsa && mkdir -p /var/run/sshd && exec /usr/sbin/sshd -D'
+- cat ~/.ssh/id_rsa.pub | docker exec -i centos-sshd sh -c 'cd; umask 077; mkdir -p .ssh; tee -a .ssh/authorized_keys'
+- ssh-keygen -f ~/.ssh/known_hosts -R [localhost]:5848 || true
+- echo -e "123456\n123456" | docker exec -i centos-sshd passwd
 
-  # Create ansible.cfg with correct roles_path
-  - printf '[defaults]\nroles_path=../\n' >ansible.cfg
+# Create ansible.cfg with correct roles_path
+- printf '[defaults]\nroles_path=../\n' >ansible.cfg
 
-  # Create ssh askpass shell
-  - printf '#!/bin/sh\necho 123456\n' >ps.sh
-  - chmod +x ps.sh
+# Create ssh askpass shell
+- printf '#!/bin/sh\necho 123456\n' >ps.sh
+- chmod +x ps.sh
 
 script:
-  - set -e
+- set -e
 
-  # Basic role syntax check
-  - echo ========== [syntax check] ==========
-  - ansible-playbook tests/test.yml -i tests/inventory --syntax-check
-  - ansible-lint .
-  - ansible-lint tests/test.yml
+# Basic role syntax check
+- echo ========== [syntax check] ==========
+- ansible-playbook tests/test.yml -i tests/inventory --syntax-check
+- ansible-lint .
+- ansible-lint tests/test.yml
 
-  - echo ========== [run 1st round, no key] ==========
-  - true && ! ansible-playbook tests/test.yml -i tests/inventory
-  - true && ! ansible-playbook tests/test.yml -i tests/inventory-pass
+- echo ========== [run 1st round, no key] ==========
+- true && ! ansible-playbook tests/test.yml -i tests/inventory
+- true && ! ansible-playbook tests/test.yml -i tests/inventory-pass
 
-  - echo ========== [run 2nd round, with a uncrypted key pair] ==========
-  - find /home/travis/.ansible/cp -maxdepth 1 -a ! -type d | xargs -rn1 -I {} ssh -O exit -o Port=4848 -o User=root -o ControlPath={} -tt 127.0.0.1 || true
-  - ssh-keygen -N '' -f ~/.ssh/id_rsa
-  - true && ! ansible-playbook tests/test.yml -i tests/inventory
-  - ansible-playbook tests/test.yml -i tests/inventory-pass
-  - ansible-playbook tests/test.yml -i tests/inventory
+- echo ========== [run 2nd round, with a uncrypted key pair] ==========
+- find /home/travis/.ansible/cp -maxdepth 1 -a ! -type d | xargs -rn1 -I {} ssh -O exit -o Port=4848 -o User=root -o ControlPath={} -tt 127.0.0.1 || true
+- ssh-keygen -N '' -f ~/.ssh/id_rsa
+- true && ! ansible-playbook tests/test.yml -i tests/inventory
+- ansible-playbook tests/test.yml -i tests/inventory-pass
+- ansible-playbook tests/test.yml -i tests/inventory
 
-  - echo ========== [run 3rd round, with a uncrypted private key] ==========
-  - find /home/travis/.ansible/cp -maxdepth 1 -a ! -type d | xargs -rn1 -I {} ssh -O exit -o Port=4848 -o User=root -o ControlPath={} -tt 127.0.0.1 || true
-  - rm ~/.ssh/id_rsa ~/.ssh/id_rsa.pub && ssh-keygen -N '' -f ~/.ssh/id_rsa && rm ~/.ssh/id_rsa.pub
-  - true && ! ansible-playbook tests/test.yml -i tests/inventory
-  - ansible-playbook tests/test.yml -i tests/inventory-pass
-  - ansible-playbook tests/test.yml -i tests/inventory
+- echo ========== [run 3rd round, with a uncrypted private key] ==========
+- find /home/travis/.ansible/cp -maxdepth 1 -a ! -type d | xargs -rn1 -I {} ssh -O exit -o Port=4848 -o User=root -o ControlPath={} -tt 127.0.0.1 || true
+- rm ~/.ssh/id_rsa ~/.ssh/id_rsa.pub && ssh-keygen -N '' -f ~/.ssh/id_rsa && rm ~/.ssh/id_rsa.pub
+- true && ! ansible-playbook tests/test.yml -i tests/inventory
+- ansible-playbook tests/test.yml -i tests/inventory-pass
+- ansible-playbook tests/test.yml -i tests/inventory
 
-  - echo ========== [run 4th round, install keys via control persist path] ==========
-  - rm ~/.ssh/id_rsa && ssh-keygen -N '' -f ~/.ssh/id_rsa
-  - ansible-playbook tests/test.yml -i tests/inventory
+- echo ========== [run 4th round, install keys via control persist path] ==========
+- rm ~/.ssh/id_rsa && ssh-keygen -N '' -f ~/.ssh/id_rsa
+- ansible-playbook tests/test.yml -i tests/inventory
 
-  - echo ========== [run 5th round, with a crypted key pair] ==========
-  - find /home/travis/.ansible/cp -maxdepth 1 -a ! -type d | xargs -rn1 -I {} ssh -O exit -o Port=4848 -o User=root -o ControlPath={} -tt 127.0.0.1 || true
-  - docker exec -i alpine-sshd sh -c 'rm ~/.ssh -rf' && ssh-keygen -p -P '' -N '123456' -f ~/.ssh/id_rsa
-  - true && ! ansible-playbook tests/test.yml -i tests/inventory
-  - true && ! ansible-playbook tests/test.yml -i tests/inventory-pass
+- echo ========== [run 5th round, with a crypted key pair] ==========
+- find /home/travis/.ansible/cp -maxdepth 1 -a ! -type d | xargs -rn1 -I {} ssh -O exit -o Port=4848 -o User=root -o ControlPath={} -tt 127.0.0.1 || true
+- docker exec -i alpine-sshd sh -c 'rm ~/.ssh -rf' && ssh-keygen -p -P '' -N '123456' -f ~/.ssh/id_rsa
+- true && ! ansible-playbook tests/test.yml -i tests/inventory
+- true && ! ansible-playbook tests/test.yml -i tests/inventory-pass
 
-  - echo ========== [run 6th round, with a crypted key pair in ssh-agent] ==========
-  - eval `ssh-agent`
-  - echo | DISPLAY=:0 SSH_ASKPASS="$PWD/ps.sh" ssh-add
-  - ansible-playbook tests/test.yml -i tests/inventory
+- echo ========== [run 6th round, with a crypted key pair in ssh-agent] ==========
+- eval `ssh-agent`
+- echo | DISPLAY=:0 SSH_ASKPASS="$PWD/ps.sh" ssh-add
+- ansible-playbook tests/test.yml -i tests/inventory
 
-  - echo ========== [run 7th round, with --become] ==========
-  - find /home/travis/.ansible/cp -maxdepth 1 -a ! -type d | xargs -rn1 -I {} ssh -O exit -o Port=4848 -o User=root -o ControlPath={} -tt 127.0.0.1 || true
-  - docker exec -i alpine-sshd sh -c 'rm ~/.ssh -rf'
-  - eval `ssh-agent`
-  - echo | DISPLAY=:0 SSH_ASKPASS="$PWD/ps.sh" ssh-add
-  - ansible-playbook tests/test.yml -i tests/inventory-pass --become
-  - test "$(docker exec alpine-sshd sh -c 'cat $HOME/.ssh/authorized_keys' | cut -d ' ' -f 1,2 | uniq | md5sum)" = "$(cat ~/.ssh/id_rsa.pub | cut -d ' ' -f 1,2 | md5sum)"
+- echo ========== [run 7th round, with --become] ==========
+- find /home/travis/.ansible/cp -maxdepth 1 -a ! -type d | xargs -rn1 -I {} ssh -O exit -o Port=4848 -o User=root -o ControlPath={} -tt 127.0.0.1 || true
+- docker exec -i alpine-sshd sh -c 'rm ~/.ssh -rf'
+- eval `ssh-agent`
+- echo | DISPLAY=:0 SSH_ASKPASS="$PWD/ps.sh" ssh-add
+- ansible-playbook tests/test.yml -i tests/inventory-pass --become
+- test "$(docker exec alpine-sshd sh -c 'cat $HOME/.ssh/authorized_keys' | cut -d ' ' -f 1,2 | uniq | md5sum)" = "$(cat ~/.ssh/id_rsa.pub | cut -d ' ' -f 1,2 | md5sum)"
 
-  - echo ========== [run 8th round, shell type is fish] ==========
-  - find /home/travis/.ansible/cp -maxdepth 1 -a ! -type d | xargs -rn1 -I {} ssh -O exit -o Port=4848 -o User=root -o ControlPath={} -tt 127.0.0.1 || true
-  - docker exec -i alpine-sshd sh -c 'rm ~/.ssh -rf'
-  - docker exec -i alpine-sshd sh -c 'apk update && apk add fish bc'
-  - ansible-playbook tests/test.yml -i tests/inventory-fish
-  - test "$(docker exec alpine-sshd sh -c 'cat $HOME/.ssh/authorized_keys' | cut -d ' ' -f 1,2 | uniq | md5sum)" = "$(cat ~/.ssh/id_rsa.pub | cut -d ' ' -f 1,2 | md5sum)"
+- echo ========== [run 8th round, shell type is fish] ==========
+- find /home/travis/.ansible/cp -maxdepth 1 -a ! -type d | xargs -rn1 -I {} ssh -O exit -o Port=4848 -o User=root -o ControlPath={} -tt 127.0.0.1 || true
+- docker exec -i alpine-sshd sh -c 'rm ~/.ssh -rf'
+- docker exec -i alpine-sshd sh -c 'apk update && apk add fish bc'
+- ansible-playbook tests/test.yml -i tests/inventory-fish
+- test "$(docker exec alpine-sshd sh -c 'cat $HOME/.ssh/authorized_keys' | cut -d ' ' -f 1,2 | uniq | md5sum)" = "$(cat ~/.ssh/id_rsa.pub | cut -d ' ' -f 1,2 | md5sum)"
 
-  - echo ========== [run 9th round, centos with csh shell] ==========
-  - ansible-playbook tests/test.yml -i tests/inventory-csh
-  - test "$(docker exec centos-sshd sh -c 'cat $HOME/.ssh/authorized_keys' | cut -d ' ' -f 1,2 | uniq | md5sum)" = "$(cat ~/.ssh/id_rsa.pub | cut -d ' ' -f 1,2 | md5sum)"
+- echo ========== [run 9th round, centos with csh shell] ==========
+- ansible-playbook tests/test.yml -i tests/inventory-csh
+- test "$(docker exec centos-sshd sh -c 'cat $HOME/.ssh/authorized_keys' | cut -d ' ' -f 1,2 | uniq | md5sum)" = "$(cat ~/.ssh/id_rsa.pub | cut -d ' ' -f 1,2 | md5sum)"
 
 notifications:
   webhooks: https://galaxy.ansible.com/api/v1/notifications/
