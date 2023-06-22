@@ -67,7 +67,7 @@ jobs:
         ansible-galaxy install -p tests/roles -r requirements.yml
         ansible-galaxy install -p tests/roles -r requirements-test.yml
     - name: lint
-      run: ansible-lint --show-relpath
+      run: ansible-lint --show-relpath --exclude tests/roles
 
   deploy-job:
     name: deploy the role on tag
