@@ -56,7 +56,7 @@
     delegate_to: localhost
     register: check_login_pubkey
     ansible.builtin.raw: >-
-         {{ ansible_ssh_executable | quote }}
+         {{ ansible_ssh_executable | d("ssh") | quote }}
          -o BatchMode=yes
          {{ ssh_prepend_args }}
          {{ ssh_options.stdout_lines | map('quote') | join(' ') }} 2>&1
@@ -73,7 +73,7 @@
       register: debug_identity_files
       ansible.builtin.expect:
         command: >-
-           {{ ansible_ssh_executable | quote }}
+           {{ ansible_ssh_executable | d("ssh") | quote }}
            -o LogLevel=DEBUG1
            {{ ssh_prepend_args }}
            {{ ssh_options.stdout_lines | reject('match', '^-v+$') | map('quote') | join(' ') }} 2>&1
@@ -161,7 +161,7 @@
       delegate_to: localhost
       changed_when: False
       ansible.builtin.raw: >
-        {{ ansible_ssh_executable | quote }}
+        {{ ansible_ssh_executable | d("ssh") | quote }}
         -o BatchMode=yes
         {{ ssh_prepend_args }}
         {{ ssh_options.stdout_lines | map('quote') | join(' ') }}
