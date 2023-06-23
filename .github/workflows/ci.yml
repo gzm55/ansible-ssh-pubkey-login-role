@@ -74,7 +74,7 @@ jobs:
         find /home/travis/.ansible/cp -maxdepth 1 -a ! -type d | xargs -rn1 -I {} ssh -O exit -o Port=4848 -o User=root -o ControlPath={} -tt 127.0.0.1 || true
         ssh-keygen -N '' -f ~/.ssh/id_rsa
         true && ! ansible-playbook tests/test.yml -i tests/inventory
-        ansible-playbook tests/test.yml -i tests/inventory-pass
+        ansible-playbook -vvvvv tests/test.yml -i tests/inventory-pass
         ansible-playbook tests/test.yml -i tests/inventory
 
     - name: TEST 3 - with a uncrypted private key
@@ -122,7 +122,7 @@ jobs:
         set -x
         find /home/travis/.ansible/cp -maxdepth 1 -a ! -type d | xargs -rn1 -I {} ssh -O exit -o Port=4848 -o User=root -o ControlPath={} -tt 127.0.0.1 || true
         docker exec -i alpine-sshd sh -c 'rm ~/.ssh -rf'
-        docker exec -i alpine-sshd sh -c 'apk update && apk add fish bc'
+        docker exec -i alpine-sshd sh -c 'apk add fish bc'
         ansible-playbook tests/test.yml -i tests/inventory-fish
         test "$(docker exec alpine-sshd sh -c 'cat $HOME/.ssh/authorized_keys' | cut -d ' ' -f 1,2 | uniq | md5sum)" = "$(cat ~/.ssh/id_rsa.pub | cut -d ' ' -f 1,2 | md5sum)"
 
@@ -130,7 +130,7 @@ jobs:
       run: |
         set -x
         ansible-playbook tests/test.yml -i tests/inventory-csh
-        test "$(docker exec centos-sshd sh -c 'cat $HOME/.ssh/authorized_keys' | cut -d ' ' -f 1,2 | uniq | md5sum)" = "$(cat ~/.ssh/id_rsa.pub | cut -d ' ' -f 1,2 | md5sum)"
+        test "$(docker exec centos-sshd sh -xc 'cat $HOME/.ssh/authorized_keys' | cut -d ' ' -f 1,2 | uniq | md5sum)" = "$(cat ~/.ssh/id_rsa.pub | cut -d ' ' -f 1,2 | md5sum)"
 
   lint-job:
     name: lint codes
