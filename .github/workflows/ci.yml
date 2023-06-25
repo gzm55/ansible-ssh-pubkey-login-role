@@ -30,7 +30,7 @@ jobs:
         sudo apt install sshpass
         sshpass -V
         pip3 install -r requirements.txt
-        pip3 install ansible-core
+        pip3 install ansible
         ansible --version
         ansible-galaxy install -p tests/roles -r requirements.yml
         ansible-galaxy install -p tests/roles -r requirements-test.yml
