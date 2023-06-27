@@ -1,4 +1,4 @@
-ssh_pubkey_login (1.0.3-dev)
+ssh_pubkey_login (2.0.0)
 ============================
 
 Role for copying local ssh public keys to managed hosts.
@@ -20,7 +20,7 @@ Requirements
 ------------
 
 On the control machine, Python Modules:
-* ansible>=2.5
+* ansible-core>=2.8
 * jinja2>=2.7
 * pexpect>=3.3
 
