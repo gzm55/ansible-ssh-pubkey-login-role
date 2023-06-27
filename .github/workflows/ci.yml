@@ -111,17 +111,20 @@ jobs:
         eval `ssh-agent`
         echo | DISPLAY=:0 SSH_ASKPASS="$PWD/ps.sh" ssh-add
         ansible-playbook tests/test.yml -i tests/inventory
+        ssh-agent -k
+        unset SSH_AGENT_PID SSH_AUTH_SOCK
 
     - name: TEST 7 - with --become
       run: |
         set -x
         find /home/travis/.ansible/cp -maxdepth 1 -a ! -type d | xargs -rn1 -I {} ssh -O exit -o Port=4848 -o User=root -o ControlPath={} -tt 127.0.0.1 || true
         docker exec -i alpine-sshd sh -c 'rm ~/.ssh -rf'
-        env
-        #eval `ssh-agent`
-        #echo | DISPLAY=:0 SSH_ASKPASS="$PWD/ps.sh" ssh-add
+        eval `ssh-agent`
+        echo | DISPLAY=:0 SSH_ASKPASS="$PWD/ps.sh" ssh-add
         ansible-playbook tests/test.yml -i tests/inventory-pass --become
         test "$(docker exec alpine-sshd sh -c 'cat $HOME/.ssh/authorized_keys' | cut -d ' ' -f 1,2 | uniq | md5sum)" = "$(cat ~/.ssh/id_rsa.pub | cut -d ' ' -f 1,2 | md5sum)"
+        ssh-agent -k
+        unset SSH_AGENT_PID SSH_AUTH_SOCK
 
     - name: TEST 8 - shell type is fish
       run: |
@@ -129,9 +132,12 @@ jobs:
         find /home/travis/.ansible/cp -maxdepth 1 -a ! -type d | xargs -rn1 -I {} ssh -O exit -o Port=4848 -o User=root -o ControlPath={} -tt 127.0.0.1 || true
         docker exec -i alpine-sshd sh -c 'rm ~/.ssh -rf'
         docker exec -i alpine-sshd sh -c 'apk add fish bc'
-        env
+        eval `ssh-agent`
+        echo | DISPLAY=:0 SSH_ASKPASS="$PWD/ps.sh" ssh-add
         ansible-playbook -vvvvv tests/test.yml -i tests/inventory-fish
         test "$(docker exec alpine-sshd sh -c 'cat $HOME/.ssh/authorized_keys' | cut -d ' ' -f 1,2 | uniq | md5sum)" = "$(cat ~/.ssh/id_rsa.pub | cut -d ' ' -f 1,2 | md5sum)"
+        ssh-agent -k
+        unset SSH_AGENT_PID SSH_AUTH_SOCK
 
     - name: TEST 9 - centos with csh shell
       run: |
