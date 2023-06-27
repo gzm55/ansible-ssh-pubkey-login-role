@@ -111,8 +111,7 @@ jobs:
         eval `ssh-agent`
         echo | DISPLAY=:0 SSH_ASKPASS="$PWD/ps.sh" ssh-add
         ansible-playbook tests/test.yml -i tests/inventory
-        ssh-agent -k
-        unset SSH_AGENT_PID SSH_AUTH_SOCK
+        eval `ssh-agent -k`
 
     - name: TEST 7 - with --become
       run: |
@@ -123,8 +122,7 @@ jobs:
         echo | DISPLAY=:0 SSH_ASKPASS="$PWD/ps.sh" ssh-add
         ansible-playbook tests/test.yml -i tests/inventory-pass --become
         test "$(docker exec alpine-sshd sh -c 'cat $HOME/.ssh/authorized_keys' | cut -d ' ' -f 1,2 | uniq | md5sum)" = "$(cat ~/.ssh/id_rsa.pub | cut -d ' ' -f 1,2 | md5sum)"
-        ssh-agent -k
-        unset SSH_AGENT_PID SSH_AUTH_SOCK
+        eval `ssh-agent -k`
 
     - name: TEST 8 - shell type is fish
       run: |
@@ -134,16 +132,18 @@ jobs:
         docker exec -i alpine-sshd sh -c 'apk add fish bc'
         eval `ssh-agent`
         echo | DISPLAY=:0 SSH_ASKPASS="$PWD/ps.sh" ssh-add
-        ansible-playbook -vvvvv tests/test.yml -i tests/inventory-fish
+        ansible-playbook tests/test.yml -i tests/inventory-fish
         test "$(docker exec alpine-sshd sh -c 'cat $HOME/.ssh/authorized_keys' | cut -d ' ' -f 1,2 | uniq | md5sum)" = "$(cat ~/.ssh/id_rsa.pub | cut -d ' ' -f 1,2 | md5sum)"
-        ssh-agent -k
-        unset SSH_AGENT_PID SSH_AUTH_SOCK
+        eval `ssh-agent -k`
 
     - name: TEST 9 - centos with csh shell
       run: |
         set -x
+        eval `ssh-agent`
+        echo | DISPLAY=:0 SSH_ASKPASS="$PWD/ps.sh" ssh-add
         ansible-playbook tests/test.yml -i tests/inventory-csh
         test "$(docker exec centos-sshd sh -xc 'cat $HOME/.ssh/authorized_keys' | cut -d ' ' -f 1,2 | uniq | md5sum)" = "$(cat ~/.ssh/id_rsa.pub | cut -d ' ' -f 1,2 | md5sum)"
+        eval `ssh-agent -k`
 
   lint-job:
     name: lint codes
