@@ -79,7 +79,7 @@
            {{ ssh_options.stdout_lines | reject('match', '^-v+$') | map('quote') | join(' ') }} 2>&1
         responses:
           '(?i)Enter passphrase for': ''
-      failed_when: check_login_pubkey.stdout is not defined or check_login_pubkey.stdout is search('Enter passphrase for')
+      failed_when: debug_identity_files.stdout is not defined or debug_identity_files.stdout is search('Enter passphrase for')
       changed_when: False
 
     ## skip *_sk keys, fido2 keys require pressing the button on the fido keys
